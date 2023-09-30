@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "FFXIVIMDicGenerator/1.0.0": {
+        "dependencies": {
+          "TinyPinyin": "1.1.0"
+        },
+        "runtime": {
+          "FFXIVIMDicGenerator.dll": {}
+        }
+      },
+      "TinyPinyin/1.1.0": {
+        "runtime": {
+          "lib/net6.0/TinyPinyin.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FFXIVIMDicGenerator/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "TinyPinyin/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pwe99NXsWkSeJdOwzcweorlyoB2frOlTU37QwzmnnxfRT5vRENXm4UOl5g4Nxq5V9lYOBWK1mZIozFfIlDVjYA==",
+      "path": "tinypinyin/1.1.0",
+      "hashPath": "tinypinyin.1.1.0.nupkg.sha512"
+    }
+  }
+}

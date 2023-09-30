@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "jCRoC5u4LUNlF6u0MBgkxL/OMbxcoDHDN6n3ki5a65hSRrCSLmZg/Dc/gwqdWyRiqhEmXyitXVxbBNPks/p08g==",
+  "success": true,
+  "projectFilePath": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\young\\.nuget\\packages\\tinypinyin\\1.1.0\\tinypinyin.1.1.0.nupkg.sha512"
+  ],
+  "logs": []
+}

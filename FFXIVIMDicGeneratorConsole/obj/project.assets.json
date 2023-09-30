@@ -1,0 +1,106 @@
+{
+  "version": 3,
+  "targets": {
+    "net6.0": {
+      "TinyPinyin.Net/1.0.2": {
+        "type": "package",
+        "compile": {
+          "lib/net5.0/TinyPinyin.dll": {}
+        },
+        "runtime": {
+          "lib/net5.0/TinyPinyin.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "TinyPinyin.Net/1.0.2": {
+      "sha512": "dbQcaukn7DEOsgFJn4YFQT0zfbALWHZiZMIvsvLOaMQRnCnOfYPE5Fq4PoIqCgGMnPt21NsLxEuXYRq4QQSnDA==",
+      "type": "package",
+      "path": "tinypinyin.net/1.0.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net461/TinyPinyin.dll",
+        "lib/net5.0/TinyPinyin.dll",
+        "lib/netstandard2.0/TinyPinyin.dll",
+        "tinypinyin.net.1.0.2.nupkg.sha512",
+        "tinypinyin.net.nuspec"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net6.0": [
+      "TinyPinyin.Net >= 1.0.2"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\young\\.nuget\\packages\\": {},
+    "D:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGeneratorConsole\\FFXIVIMDicGeneratorConsole.csproj",
+      "projectName": "FFXIVIMDicGeneratorConsole",
+      "projectPath": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGeneratorConsole\\FFXIVIMDicGeneratorConsole.csproj",
+      "packagesPath": "C:\\Users\\young\\.nuget\\packages\\",
+      "outputPath": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGeneratorConsole\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "D:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\young\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net6.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "net6.0": {
+        "targetAlias": "net6.0",
+        "dependencies": {
+          "TinyPinyin.Net": {
+            "target": "Package",
+            "version": "[1.0.2, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.401\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}
