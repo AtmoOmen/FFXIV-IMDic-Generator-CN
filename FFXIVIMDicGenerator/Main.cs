@@ -330,11 +330,6 @@ namespace FFXIVIMDicGenerator
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            MessageBox.Show("注意事项:\n" +
-                "1.本地/在线数据源均采用 ffxiv-datamining-cn 项目提供的 .csv 文件\n" +
-                "2.从在线文件生成 功能不需要选择本地文件夹目录\n" +
-                "3.如果在线获取失败/需要修改生成词库包含的范围，请修改本程序同一目录下的 Links.txt 文件中的网址\n" +
-                "4.程序默认生成的为 搜狗拼音txt 词库，如需其他词库请自行使用 深蓝词库转换 软件进行转换");
 
             string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
 
