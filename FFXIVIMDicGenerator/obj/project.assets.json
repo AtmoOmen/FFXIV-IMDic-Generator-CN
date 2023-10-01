@@ -44,11 +44,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator.csproj",
+      "projectUniqueName": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIV-IMDic-Generator-CN\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator.csproj",
       "projectName": "FFXIVIMDicGenerator",
-      "projectPath": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator.csproj",
+      "projectPath": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIV-IMDic-Generator-CN\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator.csproj",
       "packagesPath": "C:\\Users\\young\\.nuget\\packages\\",
-      "outputPath": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\FFXIVIMDicGenerator\\obj\\",
+      "outputPath": "D:\\young\\Documents\\GitHub\\FFXIVIMDicGenerator\\FFXIV-IMDic-Generator-CN\\FFXIVIMDicGenerator\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "D:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
