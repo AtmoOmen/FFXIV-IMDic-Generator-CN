@@ -1,59 +1,14 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Net.Http;
-using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using TinyPinyin;
+using static System.Windows.Forms.LinkLabel;
 
 namespace FFXIVIMDicGenerator
 {
+#pragma warning disable CS8600, CS8603, CS8604
     public partial class Main : Form
     {
-        private readonly List<string> onlineItemFileLinks = new List<string>
-        {
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Action.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BaseParam.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BuddyEquip.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ChocoboRaceAbility.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ChocoboRaceItem.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ClassJob.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Companion.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/CompanyAction.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/CompanyCraftDraft.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ContentGauge.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ContentsTutorial.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/CraftAction.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/PlaceName.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/AnimaWeapon5PatternGroup.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/AOZScore.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BeastTribe.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Quest.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DeepDungeonItem.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DeepDungeonMagicStone.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DynamicEvent.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DynamicEventEnemyType.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Emote.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/EurekaAetherItem.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/EventItem.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GrandCompany.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/HousingPreset.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Pet.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/PetAction.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/PetMirage.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/World.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Title.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/TripleTriadCard.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/TripleTriadCardType.csv",
-            "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Weather.csv",
-        };
-        private List<string> onlineLinksFromFile = new List<string>();
-
         public Main()
         {
             InitializeComponent();
@@ -67,6 +22,8 @@ namespace FFXIVIMDicGenerator
                 if (folderDialog.ShowDialog() == DialogResult.OK)
                 {
                     txtFolderPath.Text = folderDialog.SelectedPath;
+                    var csvFileCount = Directory.EnumerateFiles(folderDialog.SelectedPath, "*.csv", SearchOption.AllDirectories).Count();
+                    localFileCountLabel.Text = $"当前文件数: {csvFileCount}";
                 }
                 enableAllbtns();
             }
@@ -79,6 +36,13 @@ namespace FFXIVIMDicGenerator
             if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
             {
                 MessageBox.Show("请选择有效的文件夹");
+                return;
+            }
+
+            var Format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
+            if (string.IsNullOrEmpty(Format) || Format == "未知")
+            {
+                MessageBox.Show("请选择有效的格式转换类型");
                 return;
             }
 
@@ -103,17 +67,18 @@ namespace FFXIVIMDicGenerator
             {
                 File.WriteAllLines(outputFilePath, allData, Encoding.UTF8);
                 var removedData = RemoveDuplicates(outputFilePath);
+                OpenConvertCmd(Format);
                 MessageBox.Show($"处理完成，共 {allData.Count - removedData} 条\n" +
                     $"输出文件位于: {outputFilePath}");
                 enableAllbtns();
-                processLabel.Text = string.Empty;
+                handleGroup.Text = "生成";
                 OpenFolder(Environment.CurrentDirectory);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"保存文件时发生错误: {ex.Message}");
                 enableAllbtns();
-                processLabel.Text = string.Empty;
+                handleGroup.Text = "生成";
             }
         }
 
@@ -122,33 +87,50 @@ namespace FFXIVIMDicGenerator
             disableAllbtns();
             List<string> allData = new List<string>();
 
-            foreach (string onlineLink in onlineLinksFromFile)
+            var Format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
+            if (string.IsNullOrEmpty(Format) || Format == "未知")
             {
-                await ProcessCsvFile(onlineLink, allData);
+                MessageBox.Show("请选择有效的格式转换类型");
+                return;
             }
+
+            int totalFiles = onlineLinksFromFile.Count;
+            int processedFiles = 0;
+
+            progressBar.Maximum = totalFiles;
+            progressBar.Value = 0;
+
+            await Task.WhenAll(onlineLinksFromFile.Select(async link =>
+            {
+                await ProcessCsvFile(link, allData);
+
+                processedFiles++;
+                progressBar.Value = processedFiles;
+            }));
 
             string outputFilePath = Path.Combine(Environment.CurrentDirectory, "output.txt");
             try
             {
                 File.WriteAllLines(outputFilePath, allData, Encoding.UTF8);
                 var removedData = RemoveDuplicates(outputFilePath);
+                OpenConvertCmd(Format);
                 MessageBox.Show($"处理完成，共 {allData.Count - removedData} 条\n" +
                     $"输出文件位于: {outputFilePath}");
                 enableAllbtns();
-                processLabel.Text = string.Empty;
+                handleGroup.Text = "生成";
                 OpenFolder(Environment.CurrentDirectory);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"保存文件时发生错误: {ex.Message}");
                 enableAllbtns();
-                processLabel.Text = string.Empty;
+                handleGroup.Text = "生成";
             }
         }
 
         private async Task ProcessCsvFile(string filePath, List<string> allData)
         {
-            processLabel.Text = $"正在处理文件: {Path.GetFileName(filePath)}";
+            handleGroup.Text = $"正在处理文件: {Path.GetFileName(filePath)}";
             List<string[]> rows = await ReadCsvFile(filePath);
 
             if (rows == null || rows.Count < 2)
@@ -186,7 +168,7 @@ namespace FFXIVIMDicGenerator
                 allData.Add($"{kvp.Value} {kvp.Key}");
             }
 
-            processLabel.Text = $"处理完成: {Path.GetFileName(filePath)}";
+            handleGroup.Text = $"处理完成: {Path.GetFileName(filePath)}";
         }
 
         private async Task<List<string[]>> ReadCsvFile(string filePath)
@@ -195,7 +177,12 @@ namespace FFXIVIMDicGenerator
             {
                 if (filePath.StartsWith("http") || filePath.StartsWith("https"))
                 {
-                    using (HttpClient httpClient = new HttpClient())
+                    var httpClientHandler = new HttpClientHandler()
+                    {
+                        MaxConnectionsPerServer = 10,
+                    };
+
+                    using (HttpClient httpClient = new HttpClient(httpClientHandler))
                     {
                         HttpResponseMessage response = await httpClient.GetAsync(filePath);
                         if (response.IsSuccessStatusCode)
@@ -349,10 +336,9 @@ namespace FFXIVIMDicGenerator
                 "3.如果在线获取失败/需要修改生成词库包含的范围，请修改本程序同一目录下的 Links.txt 文件中的网址\n" +
                 "4.程序默认生成的为 搜狗拼音txt 词库，如需其他词库请自行使用 深蓝词库转换 软件进行转换");
 
-
             string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
 
-            if (!Directory.Exists(filePath))
+            if (!File.Exists(filePath))
             {
                 try
                 {
@@ -379,6 +365,22 @@ namespace FFXIVIMDicGenerator
             {
                 MessageBox.Show($"读取文件时发生错误: {ex.Message}");
             }
+
+            onlineLinkstextbox.Text = "./Links.txt";
+
+            string fileContent = File.ReadAllText(filePath);
+
+            string pattern = @"(http://|https://)\S+";
+            MatchCollection matches = Regex.Matches(fileContent, pattern);
+
+            onlineLinkCountLabel.Text = $"当前链接数: {matches.Count}";
+
+            sourceFormatCombo.SelectedIndex = 0;
+            desFormatCombo.SelectedIndex = 0;
+
+            MaximizeBox = false;
+            MinimizeBox = true;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
         }
 
         private void OpenUrl(string url)
@@ -395,11 +397,6 @@ namespace FFXIVIMDicGenerator
             {
                 Console.WriteLine($"打开网址时发生错误: {ex.Message}");
             }
-        }
-
-        private void fileText_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void ffxivdataminingcnToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -419,10 +416,24 @@ namespace FFXIVIMDicGenerator
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
+            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
+
             try
             {
-                File.WriteAllLines(Path.Combine(Environment.CurrentDirectory, "Links.txt"), onlineItemFileLinks);
+                File.WriteAllLines(filePath, onlineItemFileLinks);
                 MessageBox.Show("重置成功");
+
+                string fileContent = File.ReadAllText(filePath);
+
+                string pattern = @"(http://|https://)\S+";
+                MatchCollection matches = Regex.Matches(fileContent, pattern);
+
+                onlineLinkCountLabel.Text = $"当前链接数: {matches.Count}";
+                onlineLinkstextbox.Text = "./Links.txt";
+
+                string[] lines = File.ReadAllLines(filePath);
+                onlineLinksFromFile.Clear();
+                onlineLinksFromFile.AddRange(lines);
             }
             catch (Exception ex)
             {
@@ -447,6 +458,83 @@ namespace FFXIVIMDicGenerator
             btnConvert.Enabled = true;
             btnBrowseFolder.Enabled = true;
             btnBrowseOnlineFiles.Enabled = true;
+        }
+
+        private void onlineFileLinkEdit_Click(object sender, EventArgs e)
+        {
+            OpenFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
+        }
+
+        private void onlineLinkCountLabel_Click(object sender, EventArgs e)
+        {
+            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
+
+            try
+            {
+                if (File.Exists(filePath))
+                {
+                    string fileContent = File.ReadAllText(filePath);
+                    string[] lines = File.ReadAllLines(filePath);
+                    onlineLinksFromFile.Clear();
+                    onlineLinksFromFile.AddRange(lines);
+
+                    string pattern = @"(http://|https://)\S+";
+                    MatchCollection matches = Regex.Matches(fileContent, pattern);
+
+                    onlineLinkCountLabel.Text = $"当前链接数: {matches.Count}";
+                    onlineLinkstextbox.Text = "./Links.txt";
+                }
+                else
+                {
+                    onlineLinkCountLabel.Text = $"当前链接数:";
+                    onlineLinkstextbox.Text = "Links.txt 文件读取错误, 请重置";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"读取文件时发生错误: {ex.Message}");
+            }
+        }
+
+        private void OpenConvertCmd(string outputType)
+        {
+            string converterPath = Path.Combine(Environment.CurrentDirectory, "ConvertProgram", "ImeWlConverterCmd.dll");
+            string inputType = "sgpy";
+            string inputPaths = Path.Combine(Environment.CurrentDirectory, "output.txt");
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "output.txt");
+            string commandLineArgs = $"-i:{inputType} {inputPaths} -o:{outputType} {outputPath}";
+
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"{converterPath} {commandLineArgs}",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            Process process = new Process
+            {
+                StartInfo = psi
+            };
+
+            try
+            {
+                process.Start();
+
+                process.WaitForExit();
+
+                string output = process.StandardOutput.ReadToEnd();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"格式转换过程中发生错误：{ex.Message}");
+            }
+        }
+
+        private string GetDesConvertType(string sourceName)
+        {
+            return desTypes.TryGetValue(sourceName, out string? desType) ? desType : "未知";
         }
     }
 }

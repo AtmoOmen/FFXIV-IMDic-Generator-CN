@@ -4,5 +4,8 @@
     <Compile Update="Main.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="MainDeclarations.cs">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
 </Project>

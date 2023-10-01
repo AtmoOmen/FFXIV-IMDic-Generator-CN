@@ -1,0 +1,71 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "ImeWlConverterCmd/2.8.0": {
+        "dependencies": {
+          "ImeWlConverterCore": "2.8.0",
+          "UTF.Unknown": "2.5.1"
+        },
+        "runtime": {
+          "ImeWlConverterCmd.dll": {}
+        }
+      },
+      "SharpZipLib/1.4.2": {
+        "runtime": {
+          "lib/net6.0/ICSharpCode.SharpZipLib.dll": {
+            "assemblyVersion": "1.4.2.13",
+            "fileVersion": "1.4.2.13"
+          }
+        }
+      },
+      "UTF.Unknown/2.5.1": {
+        "runtime": {
+          "lib/netcoreapp3.0/UtfUnknown.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.0.664.0"
+          }
+        }
+      },
+      "ImeWlConverterCore/2.8.0": {
+        "dependencies": {
+          "SharpZipLib": "1.4.2",
+          "UTF.Unknown": "2.5.1"
+        },
+        "runtime": {
+          "ImeWlConverterCore.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ImeWlConverterCmd/2.8.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SharpZipLib/1.4.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A==",
+      "path": "sharpziplib/1.4.2",
+      "hashPath": "sharpziplib.1.4.2.nupkg.sha512"
+    },
+    "UTF.Unknown/2.5.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-KhZuBaO55PIu6m4bkij3ZQL8qwVyofwFpNnyguXFjwxJlbfYX+dRn8tGy/PjTK6I4UJm8ujkJFvBLaV7MKltTA==",
+      "path": "utf.unknown/2.5.1",
+      "hashPath": "utf.unknown.2.5.1.nupkg.sha512"
+    },
+    "ImeWlConverterCore/2.8.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
