@@ -12,7 +12,6 @@ https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Craf
 https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/PlaceName.csv
 https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/AOZScore.csv
 https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BeastTribe.csv
-https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Quest.csv
 https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv
 https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DeepDungeonItem.csv
 https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DeepDungeonMagicStone.csv
