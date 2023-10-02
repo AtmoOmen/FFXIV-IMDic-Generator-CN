@@ -37,7 +37,7 @@
             ffxivdataminingcnToolStripMenuItem = new ToolStripMenuItem();
             ffxivdataminingcnToolStripMenuItem1 = new ToolStripMenuItem();
             深蓝词库转换ToolStripMenuItem1 = new ToolStripMenuItem();
-            相关工具ToolStripMenuItem = new ToolStripMenuItem();
+            csv文件内容参考ToolStripMenuItem = new ToolStripMenuItem();
             编辑ToolStripMenuItem = new ToolStripMenuItem();
             linkstxtToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem1 = new ToolStripMenuItem();
@@ -56,10 +56,13 @@
             sourceFormatCombo = new ComboBox();
             handleGroup = new GroupBox();
             progressBar = new ProgressBar();
+            onlineFileList = new CheckedListBox();
+            onlineSelectGroup = new GroupBox();
             menuStrip1.SuspendLayout();
             dataSourceGroup.SuspendLayout();
             convertGroup.SuspendLayout();
             handleGroup.SuspendLayout();
+            onlineSelectGroup.SuspendLayout();
             SuspendLayout();
             // 
             // txtFolderPath
@@ -116,16 +119,16 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { ffxivdataminingcnToolStripMenuItem, 编辑ToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(844, 32);
+            menuStrip1.Size = new Size(841, 32);
             menuStrip1.TabIndex = 6;
             menuStrip1.Text = "menuStrip1";
             // 
             // ffxivdataminingcnToolStripMenuItem
             // 
-            ffxivdataminingcnToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { ffxivdataminingcnToolStripMenuItem1, 深蓝词库转换ToolStripMenuItem1, 相关工具ToolStripMenuItem });
+            ffxivdataminingcnToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { ffxivdataminingcnToolStripMenuItem1, 深蓝词库转换ToolStripMenuItem1, csv文件内容参考ToolStripMenuItem });
             ffxivdataminingcnToolStripMenuItem.Name = "ffxivdataminingcnToolStripMenuItem";
-            ffxivdataminingcnToolStripMenuItem.Size = new Size(98, 28);
-            ffxivdataminingcnToolStripMenuItem.Text = "相关工具";
+            ffxivdataminingcnToolStripMenuItem.Size = new Size(142, 28);
+            ffxivdataminingcnToolStripMenuItem.Text = "相关工具/资料";
             // 
             // ffxivdataminingcnToolStripMenuItem1
             // 
@@ -141,11 +144,12 @@
             深蓝词库转换ToolStripMenuItem1.Text = "深蓝词库转换";
             深蓝词库转换ToolStripMenuItem1.Click += 深蓝词库转换ToolStripMenuItem1_Click;
             // 
-            // 相关工具ToolStripMenuItem
+            // csv文件内容参考ToolStripMenuItem
             // 
-            相关工具ToolStripMenuItem.Name = "相关工具ToolStripMenuItem";
-            相关工具ToolStripMenuItem.Size = new Size(281, 34);
-            相关工具ToolStripMenuItem.Text = "相关工具";
+            csv文件内容参考ToolStripMenuItem.Name = "csv文件内容参考ToolStripMenuItem";
+            csv文件内容参考ToolStripMenuItem.Size = new Size(281, 34);
+            csv文件内容参考ToolStripMenuItem.Text = ".csv 文件内容参考";
+            csv文件内容参考ToolStripMenuItem.Click += csv文件内容参考ToolStripMenuItem_Click;
             // 
             // 编辑ToolStripMenuItem
             // 
@@ -200,7 +204,6 @@
             onlineLinkCountLabel.Size = new Size(104, 24);
             onlineLinkCountLabel.TabIndex = 8;
             onlineLinkCountLabel.Text = "当前链接数:";
-            onlineLinkCountLabel.Click += onlineLinkCountLabel_Click;
             // 
             // onlineFileLinkEdit
             // 
@@ -305,7 +308,7 @@
             handleGroup.Controls.Add(progressBar);
             handleGroup.Controls.Add(btnBrowseOnlineFiles);
             handleGroup.Controls.Add(btnConvert);
-            handleGroup.Location = new Point(16, 264);
+            handleGroup.Location = new Point(16, 268);
             handleGroup.Name = "handleGroup";
             handleGroup.Size = new Size(809, 127);
             handleGroup.TabIndex = 12;
@@ -316,21 +319,43 @@
             // 
             progressBar.Location = new Point(10, 75);
             progressBar.Name = "progressBar";
-            progressBar.Size = new Size(793, 34);
+            progressBar.Size = new Size(785, 34);
             progressBar.TabIndex = 12;
+            // 
+            // onlineFileList
+            // 
+            onlineFileList.CheckOnClick = true;
+            onlineFileList.ColumnWidth = 250;
+            onlineFileList.FormattingEnabled = true;
+            onlineFileList.Location = new Point(10, 27);
+            onlineFileList.MultiColumn = true;
+            onlineFileList.Name = "onlineFileList";
+            onlineFileList.Size = new Size(785, 301);
+            onlineFileList.TabIndex = 13;
+            // 
+            // onlineSelectGroup
+            // 
+            onlineSelectGroup.Controls.Add(onlineFileList);
+            onlineSelectGroup.Location = new Point(16, 401);
+            onlineSelectGroup.Name = "onlineSelectGroup";
+            onlineSelectGroup.Size = new Size(809, 334);
+            onlineSelectGroup.TabIndex = 14;
+            onlineSelectGroup.TabStop = false;
+            onlineSelectGroup.Text = "在线生成数据源选择";
             // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(11F, 24F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(844, 399);
+            ClientSize = new Size(841, 747);
+            Controls.Add(onlineSelectGroup);
             Controls.Add(convertGroup);
             Controls.Add(menuStrip1);
             Controls.Add(dataSourceGroup);
             Controls.Add(handleGroup);
             MainMenuStrip = menuStrip1;
             Name = "Main";
-            Text = "FF14自定词库生成器";
+            Text = "FF14 输入法自定词库生成器";
             Load += Form1_Load;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
@@ -339,6 +364,7 @@
             convertGroup.ResumeLayout(false);
             convertGroup.PerformLayout();
             handleGroup.ResumeLayout(false);
+            onlineSelectGroup.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -358,7 +384,6 @@
         private ToolStripMenuItem linkstxtToolStripMenuItem;
         private ToolStripMenuItem outputtxtToolStripMenuItem;
         private ToolStripMenuItem toolStripMenuItem1;
-        private ToolStripMenuItem 相关工具ToolStripMenuItem;
         private GroupBox dataSourceGroup;
         private Label localFileCountLabel;
         private Label onlineLinksFile;
@@ -373,5 +398,8 @@
         private ComboBox desFormatCombo;
         private GroupBox handleGroup;
         private ProgressBar progressBar;
+        private ToolStripMenuItem csv文件内容参考ToolStripMenuItem;
+        private CheckedListBox onlineFileList;
+        private GroupBox onlineSelectGroup;
     }
 }

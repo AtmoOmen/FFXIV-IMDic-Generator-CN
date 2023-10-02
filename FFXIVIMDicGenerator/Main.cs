@@ -1,15 +1,20 @@
+using System.Collections.Generic;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace FFXIVIMDicGenerator
 {
-#pragma warning disable CS8600, CS8603, CS8604
+#pragma warning disable CS8600, CS8602, CS8603, CS8604, CS8622
 
     public partial class Main : Form
     {
         public Main()
         {
             InitializeComponent();
+
+            InitializeCheckedBox();
         }
 
         private void btnBrowseFolder_Click(object sender, EventArgs e)
@@ -134,6 +139,7 @@ namespace FFXIVIMDicGenerator
             {
                 try
                 {
+                    GetDefaultLinksList();
                     File.WriteAllLines(filePath, onlineItemFileLinks);
                 }
                 catch (Exception ex)
@@ -193,23 +199,14 @@ namespace FFXIVIMDicGenerator
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
             string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
+            GetDefaultLinksList();
 
             try
             {
                 File.WriteAllLines(filePath, onlineItemFileLinks);
                 MessageBox.Show("重置成功");
 
-                string fileContent = File.ReadAllText(filePath);
-
-                string pattern = @"(http://|https://)\S+";
-                MatchCollection matches = Regex.Matches(fileContent, pattern);
-
-                onlineLinkCountLabel.Text = $"当前链接数: {matches.Count}";
-                onlineLinkstextbox.Text = "./Links.txt";
-
-                string[] lines = File.ReadAllLines(filePath);
-                onlineLinksFromFile.Clear();
-                onlineLinksFromFile.AddRange(lines);
+                RefreshOnlineRelatedComponents();
             }
             catch (Exception ex)
             {
@@ -226,38 +223,6 @@ namespace FFXIVIMDicGenerator
         {
             OpenFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
         }
-
-        private void onlineLinkCountLabel_Click(object sender, EventArgs e)
-        {
-            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
-
-            try
-            {
-                if (File.Exists(filePath))
-                {
-                    string fileContent = File.ReadAllText(filePath);
-                    string[] lines = File.ReadAllLines(filePath);
-                    onlineLinksFromFile.Clear();
-                    onlineLinksFromFile.AddRange(lines);
-
-                    string pattern = @"(http://|https://)\S+";
-                    MatchCollection matches = Regex.Matches(fileContent, pattern);
-
-                    onlineLinkCountLabel.Text = $"当前链接数: {matches.Count}";
-                    onlineLinkstextbox.Text = "./Links.txt";
-                }
-                else
-                {
-                    onlineLinkCountLabel.Text = $"当前链接数:";
-                    onlineLinkstextbox.Text = "Links.txt 文件读取错误, 请重置";
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"读取文件时发生错误: {ex.Message}");
-            }
-        }
-
         private void disableAllbtns()
         {
             btnConvert.Enabled = false;
@@ -274,6 +239,86 @@ namespace FFXIVIMDicGenerator
             btnBrowseOnlineFiles.Enabled = true;
             desFormatCombo.Enabled = true;
             onlineFileLinkEdit.Enabled = true;
+        }
+
+        private void RefreshOnlineRelatedComponents(int param = -1)
+        {
+            onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
+            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
+
+            string fileContent = File.ReadAllText(filePath);
+            LinksName = GetFileNamesFromLinksFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
+            string[] lines = File.ReadAllLines(filePath);
+
+            string pattern = @"(http://|https://)\S+";
+            MatchCollection matches = Regex.Matches(fileContent, pattern);
+
+            // 链接数标签重置
+            onlineLinkCountLabel.Text = $"当前链接数: {matches.Count}";
+            onlineLinkstextbox.Text = "./Links.txt";
+
+            // 具体内容重置
+            onlineLinksFromFile.Clear();
+            onlineLinksFromFile.AddRange(lines);
+
+            // 重置列表框
+            if (param == -1)
+            {
+                for (int i = 0; i < onlineFileList.Items.Count; i++)
+                {
+                    onlineFileList.SetItemChecked(i, false);
+                }
+
+                foreach (var kvp in LinksName)
+                {
+                    List<string> keys = fileTypeNames.Keys.ToList();
+
+                    var index = keys.IndexOf(kvp);
+
+                    if (index != -1)
+                    {
+                        onlineFileList.SetItemChecked(index, true);
+                    }
+                }
+            }
+            onlineFileList.ItemCheck += onlineFileList_ItemCheck;
+        }
+
+        private void csv文件内容参考ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenUrl("https://github.com/Souma-Sumire/FFXIVChnTextPatch-Souma/wiki/CSV%E6%96%87%E4%BB%B6");
+        }
+
+        private void onlineFileList_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            string selectedItem = onlineFileList.Items[e.Index].ToString();
+            string itemText = onlineFileList.Items[e.Index].ToString();
+
+            if (itemText.StartsWith("——"))
+            {
+                e.NewValue = e.CurrentValue;
+                return;
+            }
+
+            bool isChecked = (e.NewValue == CheckState.Checked);
+            if (isChecked)
+            {
+                bool isAdded = AddLinkToFileIfNotExists(fileTypeNames.FirstOrDefault(x => x.Value == selectedItem).Key);
+                if (!isAdded)
+                {
+                    MessageBox.Show("添加失败");
+                }
+            }
+            else
+            {
+                bool isRemoved = RemoveLinkFromFileIfExists(fileTypeNames.FirstOrDefault(x => x.Value == selectedItem).Key);
+                if (!isRemoved)
+                {
+                    MessageBox.Show("删除失败");
+                }
+            }
+
+            RefreshOnlineRelatedComponents(0);
         }
     }
 }
