@@ -98,7 +98,6 @@ namespace FFXIVIMDicGenerator
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"读取 CSV 文件时发生错误: {ex.Message}");
             }
 
             return null;

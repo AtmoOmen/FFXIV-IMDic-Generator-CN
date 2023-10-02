@@ -156,9 +156,6 @@ namespace FFXIVIMDicGenerator
                     string[] lines = File.ReadAllLines(filePath);
                     onlineLinksFromFile.AddRange(lines);
                 }
-                else
-                {
-                }
             }
             catch (Exception ex)
             {

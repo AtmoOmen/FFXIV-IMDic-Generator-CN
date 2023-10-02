@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "FFXIVIMDicGenerator": {
+      "commandName": "Project",
+      "hotReloadEnabled": false
+    }
+  }
+}
