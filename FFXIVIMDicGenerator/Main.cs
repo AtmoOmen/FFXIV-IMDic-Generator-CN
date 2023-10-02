@@ -141,6 +141,7 @@ namespace FFXIVIMDicGenerator
                 {
                     GetDefaultLinksList();
                     File.WriteAllLines(filePath, onlineItemFileLinks);
+                    RefreshOnlineRelatedComponents();
                 }
                 catch (Exception ex)
                 {
