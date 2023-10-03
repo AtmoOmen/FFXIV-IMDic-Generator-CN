@@ -14,6 +14,8 @@ namespace FFXIVIMDicGenerator
         {
             InitializeComponent();
 
+            Text += localVersion;
+
             InitializeCheckedBox();
 
             StartUpdateProgram();

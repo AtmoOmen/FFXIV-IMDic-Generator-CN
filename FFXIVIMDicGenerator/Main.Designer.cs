@@ -376,7 +376,7 @@
             Controls.Add(handleGroup);
             MainMenuStrip = menuStrip1;
             Name = "Main";
-            Text = "FF14 输入法自定词库生成器";
+            Text = "FF14 输入法自定义词库生成器 ";
             Load += Form1_Load;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
