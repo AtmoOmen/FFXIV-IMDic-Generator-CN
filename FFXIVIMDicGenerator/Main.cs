@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace FFXIVIMDicGenerator
 {
-#pragma warning disable CS8600, CS8602, CS8603, CS8604, CS8622
+#pragma warning disable CS8600, CS8602, CS8603, CS8604, CS8622, CS4014
 
     public partial class Main : Form
     {
@@ -15,6 +15,8 @@ namespace FFXIVIMDicGenerator
             InitializeComponent();
 
             InitializeCheckedBox();
+
+            StartUpdateProgram();
         }
 
         private void btnBrowseFolder_Click(object sender, EventArgs e)
@@ -96,6 +98,8 @@ namespace FFXIVIMDicGenerator
                 MessageBox.Show("请选择有效的格式转换类型");
                 return;
             }
+
+            onlineLinksFromFile = onlineLinksFromFile.Where(link => !string.IsNullOrEmpty(link)).ToList();
 
             int totalFiles = onlineLinksFromFile.Count;
             int processedFiles = 0;
@@ -244,6 +248,7 @@ namespace FFXIVIMDicGenerator
             onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
             string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
 
+
             string fileContent = File.ReadAllText(filePath);
             LinksName = GetFileNamesFromLinksFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
             string[] lines = File.ReadAllLines(filePath);
@@ -317,6 +322,40 @@ namespace FFXIVIMDicGenerator
             }
 
             RefreshOnlineRelatedComponents(0);
+        }
+
+        private void btnReloadOnline_Click(object sender, EventArgs e)
+        {
+            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
+            GetDefaultLinksList();
+
+            try
+            {
+                File.WriteAllLines(filePath, onlineItemFileLinks);
+                MessageBox.Show("重置成功");
+
+                RefreshOnlineRelatedComponents();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"重置时发生错误: {ex.Message}");
+            }
+        }
+
+        private void onlineLinkCountLabel_Click(object sender, EventArgs e)
+        {
+            if (!File.Exists(Path.Combine(Environment.CurrentDirectory, "Links.txt")))
+            {
+                onlineLinkstextbox.Text = "读取错误，请重置！";
+                return;
+            }
+
+            RefreshOnlineRelatedComponents();
+        }
+
+        private void 国内镜像链接ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ReplaceDomainInFile();
         }
     }
 }

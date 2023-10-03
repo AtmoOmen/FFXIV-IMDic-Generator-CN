@@ -6,21 +6,11 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+	<PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="TinyPinyin" Version="1.1.0" />
   </ItemGroup>
 
-	<ItemGroup>
-		<None Update="ConvertProgram\**\*">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-  <ItemGroup>
-    <Folder Include="ConvertProgram\" />
-  </ItemGroup>
-
-	
 </Project>

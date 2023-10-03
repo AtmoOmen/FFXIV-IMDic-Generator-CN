@@ -1,26 +1,38 @@
 ﻿using System.Diagnostics;
-using System.Net;
+using System.IO.Compression;
+using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using TinyPinyin;
+using System.Net;
 
-#pragma warning disable CS8600, CS8603, CS8604, CS8622
+#pragma warning disable CS8600, CS8603, CS8604, CS8622, CS8602
 
 namespace FFXIVIMDicGenerator
 {
     public partial class Main : Form
     {
+        private void StartUpdateProgram()
+        {
+            Process.Start(Path.Combine(Environment.CurrentDirectory, "Update", "UpdateProgram.exe"));
+        }
+
+
+
         private async Task ProcessCsvFile(string filePath, List<string> allData)
         {
-            handleGroup.Text = $"正在处理文件: {Path.GetFileName(filePath)}";
+            handleGroup.Text = $"处理中: {Path.GetFileName(filePath)}";
+
             List<string[]> rows = await ReadCsvFile(filePath);
 
             if (rows == null || rows.Count < 2)
             {
+                handleGroup.Text = $"处理完成: {Path.GetFileName(filePath)}";
                 return;
             }
 
             Dictionary<string, string> pinyinDictionary = new Dictionary<string, string>();
+            List<Task> tasks = new List<Task>();
 
             foreach (var keyword in keywords)
             {
@@ -37,7 +49,11 @@ namespace FFXIVIMDicGenerator
                         pinyinDictionary[name] = pinyin;
                     }
                 }
+
+                tasks.Add(Task.Delay(100));
             }
+
+            await Task.WhenAll(tasks);
 
             foreach (var kvp in pinyinDictionary)
             {
@@ -49,36 +65,31 @@ namespace FFXIVIMDicGenerator
 
         private async Task<List<string[]>> ReadCsvFile(string filePath)
         {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                return null;
+            }
+
             try
             {
                 if (filePath.StartsWith("http") || filePath.StartsWith("https"))
                 {
-                    var httpClientHandler = new HttpClientHandler()
-                    {
-                        MaxConnectionsPerServer = 10,
-                    };
-
-                    using (HttpClient httpClient = new HttpClient(httpClientHandler))
+                    using (var httpClient = new HttpClient(new HttpClientHandler { MaxConnectionsPerServer = 10 }))
                     {
                         HttpResponseMessage response = await httpClient.GetAsync(filePath);
                         if (response.IsSuccessStatusCode)
                         {
-                            long fileSize = response.Content.Headers.ContentLength ?? -1;
                             using (Stream stream = await response.Content.ReadAsStreamAsync())
                             using (StreamReader reader = new StreamReader(stream))
                             {
-                                List<string[]> rows = new List<string[]>();
-                                string line;
+                                var rows = new List<string[]>();
+                                string? line;
                                 long bytesRead = 0;
                                 while ((line = await reader.ReadLineAsync()) != null)
                                 {
                                     bytesRead += Encoding.UTF8.GetByteCount(line);
                                     rows.Add(line.Split(','));
 
-                                    if (fileSize != -1)
-                                    {
-                                        int progressPercentage = (int)(((double)bytesRead / fileSize) * 100);
-                                    }
                                 }
                                 return rows;
                             }
@@ -91,13 +102,18 @@ namespace FFXIVIMDicGenerator
                 }
                 else
                 {
-                    return File.ReadAllLines(filePath, Encoding.UTF8)
-                               .Select(line => line.Split(','))
-                               .ToList();
+                    var lines = await File.ReadAllLinesAsync(filePath, Encoding.UTF8);
+                    var rows = new List<string[]>(lines.Length);
+                    foreach (var line in lines)
+                    {
+                        rows.Add(line.Split(','));
+                    }
+                    return rows;
                 }
             }
             catch (Exception ex)
             {
+                MessageBox.Show($"读取CSV文件时发生错误: {ex.Message}");
             }
 
             return null;
@@ -260,18 +276,30 @@ namespace FFXIVIMDicGenerator
             return desTypes.TryGetValue(sourceName, out string? desType) ? desType : "未知";
         }
 
-        private static List<string> GetFileNamesFromLinksFile(string filePath)
+        private List<string> GetFileNamesFromLinksFile(string filePath)
         {
+            if (!File.Exists(filePath))
+            {
+                try
+                {
+                    GetDefaultLinksList();
+                    File.WriteAllLines(filePath, onlineItemFileLinks);
+                    RefreshOnlineRelatedComponents();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"写入文件时发生错误: {ex.Message}");
+                }
+            }
+
             List<string> fileNames = new List<string>();
 
             try
             {
-                // 读取文本文件的所有行
                 string[] lines = File.ReadAllLines(filePath);
 
                 foreach (string line in lines)
                 {
-                    // 使用字符串分割来提取文件名部分
                     string[] parts = line.Split('/');
                     if (parts.Length > 0)
                     {
@@ -282,7 +310,7 @@ namespace FFXIVIMDicGenerator
             }
             catch (Exception ex)
             {
-                Console.WriteLine("发生错误: " + ex.Message);
+                MessageBox.Show("发生错误: " + ex.Message);
             }
 
             return fileNames;
@@ -403,6 +431,42 @@ namespace FFXIVIMDicGenerator
             {
                 onlineItemFileLinks = onlineContents;
             }
+        }
+
+        static void ReplaceDomainInFile()
+        {
+            try
+            {
+                var newDomain = "raw.gitmirror.com";
+                var oldDomain = "raw.githubusercontent.com";
+                var filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
+
+                var fileContent = File.ReadAllText(filePath);
+
+                var pattern = @"https://(.*?)" + Regex.Escape(oldDomain);
+                var replacedContent = Regex.Replace(fileContent, pattern, $"https://${{1}}{newDomain}");
+
+                File.WriteAllText(filePath, replacedContent);
+
+                MessageBox.Show("域名替换完成并写入文件成功！");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"发生错误：{ex.Message}");
+            }
+        }
+
+        // 特殊目的用方法
+        public static void ShowStringList(List<string> stringList)
+        {
+            if (stringList == null || stringList.Count == 0)
+            {
+                MessageBox.Show("列表为空");
+                return;
+            }
+
+            string message = string.Join("\n", stringList);
+            MessageBox.Show(message, "String列表内容", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         // 特殊目的用方法

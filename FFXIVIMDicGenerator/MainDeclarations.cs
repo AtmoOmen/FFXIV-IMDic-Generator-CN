@@ -2,6 +2,8 @@
 {
     public partial class Main : Form
     {
+        private string localVersion = "1.0.0.0";
+
         private List<string> onlineItemFileLinks = new List<string>
         {
             "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Action.csv",
@@ -116,7 +118,7 @@
         {
             { "Seperator1", "———推荐———" },
             { "Achievement.csv", "成就名" },
-            { "Action.csv", "技能" },
+            { "Action.csv", "技能 (大数据)" },
             { "AOZScore.csv", "青魔挑战" },
             { "BaseParam.csv", "角色状态参数" },
             { "ClassJob.csv", "职业" },

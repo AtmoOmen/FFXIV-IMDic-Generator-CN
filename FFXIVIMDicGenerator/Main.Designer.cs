@@ -40,9 +40,11 @@
             csv文件内容参考ToolStripMenuItem = new ToolStripMenuItem();
             编辑ToolStripMenuItem = new ToolStripMenuItem();
             linkstxtToolStripMenuItem = new ToolStripMenuItem();
-            toolStripMenuItem1 = new ToolStripMenuItem();
             outputtxtToolStripMenuItem = new ToolStripMenuItem();
+            网络ToolStripMenuItem = new ToolStripMenuItem();
+            国内镜像链接ToolStripMenuItem = new ToolStripMenuItem();
             dataSourceGroup = new GroupBox();
+            btnReloadOnline = new Button();
             onlineLinkCountLabel = new Label();
             onlineFileLinkEdit = new Button();
             onlineLinkstextbox = new TextBox();
@@ -116,7 +118,7 @@
             // menuStrip1
             // 
             menuStrip1.ImageScalingSize = new Size(24, 24);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { ffxivdataminingcnToolStripMenuItem, 编辑ToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { ffxivdataminingcnToolStripMenuItem, 编辑ToolStripMenuItem, 网络ToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(841, 32);
@@ -153,7 +155,7 @@
             // 
             // 编辑ToolStripMenuItem
             // 
-            编辑ToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { linkstxtToolStripMenuItem, toolStripMenuItem1, outputtxtToolStripMenuItem });
+            编辑ToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { linkstxtToolStripMenuItem, outputtxtToolStripMenuItem });
             编辑ToolStripMenuItem.Name = "编辑ToolStripMenuItem";
             编辑ToolStripMenuItem.Size = new Size(62, 28);
             编辑ToolStripMenuItem.Text = "编辑";
@@ -161,26 +163,34 @@
             // linkstxtToolStripMenuItem
             // 
             linkstxtToolStripMenuItem.Name = "linkstxtToolStripMenuItem";
-            linkstxtToolStripMenuItem.Size = new Size(221, 34);
+            linkstxtToolStripMenuItem.Size = new Size(196, 34);
             linkstxtToolStripMenuItem.Text = "Links.txt";
             linkstxtToolStripMenuItem.Click += linkstxtToolStripMenuItem_Click;
-            // 
-            // toolStripMenuItem1
-            // 
-            toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(221, 34);
-            toolStripMenuItem1.Text = "重置 Links.txt";
-            toolStripMenuItem1.Click += toolStripMenuItem1_Click;
             // 
             // outputtxtToolStripMenuItem
             // 
             outputtxtToolStripMenuItem.Name = "outputtxtToolStripMenuItem";
-            outputtxtToolStripMenuItem.Size = new Size(221, 34);
+            outputtxtToolStripMenuItem.Size = new Size(196, 34);
             outputtxtToolStripMenuItem.Text = "output.txt";
             outputtxtToolStripMenuItem.Click += outputtxtToolStripMenuItem_Click;
             // 
+            // 网络ToolStripMenuItem
+            // 
+            网络ToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { 国内镜像链接ToolStripMenuItem });
+            网络ToolStripMenuItem.Name = "网络ToolStripMenuItem";
+            网络ToolStripMenuItem.Size = new Size(62, 28);
+            网络ToolStripMenuItem.Text = "网络";
+            // 
+            // 国内镜像链接ToolStripMenuItem
+            // 
+            国内镜像链接ToolStripMenuItem.Name = "国内镜像链接ToolStripMenuItem";
+            国内镜像链接ToolStripMenuItem.Size = new Size(272, 34);
+            国内镜像链接ToolStripMenuItem.Text = "替换为国内镜像链接";
+            国内镜像链接ToolStripMenuItem.Click += 国内镜像链接ToolStripMenuItem_Click;
+            // 
             // dataSourceGroup
             // 
+            dataSourceGroup.Controls.Add(btnReloadOnline);
             dataSourceGroup.Controls.Add(onlineLinkCountLabel);
             dataSourceGroup.Controls.Add(onlineFileLinkEdit);
             dataSourceGroup.Controls.Add(onlineLinkstextbox);
@@ -196,6 +206,16 @@
             dataSourceGroup.TabStop = false;
             dataSourceGroup.Text = "数据源";
             // 
+            // btnReloadOnline
+            // 
+            btnReloadOnline.Location = new Point(435, 78);
+            btnReloadOnline.Name = "btnReloadOnline";
+            btnReloadOnline.Size = new Size(92, 34);
+            btnReloadOnline.TabIndex = 9;
+            btnReloadOnline.Text = "重置";
+            btnReloadOnline.UseVisualStyleBackColor = true;
+            btnReloadOnline.Click += btnReloadOnline_Click;
+            // 
             // onlineLinkCountLabel
             // 
             onlineLinkCountLabel.AutoSize = true;
@@ -204,6 +224,7 @@
             onlineLinkCountLabel.Size = new Size(104, 24);
             onlineLinkCountLabel.TabIndex = 8;
             onlineLinkCountLabel.Text = "当前链接数:";
+            onlineLinkCountLabel.Click += onlineLinkCountLabel_Click;
             // 
             // onlineFileLinkEdit
             // 
@@ -220,9 +241,9 @@
             onlineLinkstextbox.Location = new Point(134, 80);
             onlineLinkstextbox.Name = "onlineLinkstextbox";
             onlineLinkstextbox.ReadOnly = true;
-            onlineLinkstextbox.Size = new Size(393, 30);
+            onlineLinkstextbox.Size = new Size(295, 30);
             onlineLinkstextbox.TabIndex = 6;
-            onlineLinkstextbox.Text = "Links.txt 文件读取错误, 请重置\r\n";
+            onlineLinkstextbox.Text = "Links.txt 文件读取错误";
             // 
             // onlineLinksFile
             // 
@@ -341,7 +362,7 @@
             onlineSelectGroup.Size = new Size(809, 334);
             onlineSelectGroup.TabIndex = 14;
             onlineSelectGroup.TabStop = false;
-            onlineSelectGroup.Text = "在线生成数据源选择";
+            onlineSelectGroup.Text = "在线生成数据源";
             // 
             // Main
             // 
@@ -383,7 +404,6 @@
         private ToolStripMenuItem 编辑ToolStripMenuItem;
         private ToolStripMenuItem linkstxtToolStripMenuItem;
         private ToolStripMenuItem outputtxtToolStripMenuItem;
-        private ToolStripMenuItem toolStripMenuItem1;
         private GroupBox dataSourceGroup;
         private Label localFileCountLabel;
         private Label onlineLinksFile;
@@ -401,5 +421,8 @@
         private ToolStripMenuItem csv文件内容参考ToolStripMenuItem;
         private CheckedListBox onlineFileList;
         private GroupBox onlineSelectGroup;
+        private Button btnReloadOnline;
+        private ToolStripMenuItem 网络ToolStripMenuItem;
+        private ToolStripMenuItem 国内镜像链接ToolStripMenuItem;
     }
 }
