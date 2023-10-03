@@ -326,6 +326,7 @@ namespace FFXIVIMDicGenerator
 
         private void btnReloadOnline_Click(object sender, EventArgs e)
         {
+            onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
             string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
             GetDefaultLinksList();
 
@@ -340,6 +341,8 @@ namespace FFXIVIMDicGenerator
             {
                 MessageBox.Show($"重置时发生错误: {ex.Message}");
             }
+            onlineFileList.ItemCheck += onlineFileList_ItemCheck;
+
         }
 
         private void onlineLinkCountLabel_Click(object sender, EventArgs e)

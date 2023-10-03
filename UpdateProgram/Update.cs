@@ -3,13 +3,12 @@ using System.IO.Compression;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net;
+using System.IO.Pipes;
 
 namespace UpdateProgram
 {
     public partial class Update : Form
     {
-        private string localVersion = "1.0.3.0";
-
         public Update()
         {
             this.Hide();
@@ -21,6 +20,18 @@ namespace UpdateProgram
 
         public async Task AutoUpdate()
         {
+            string localVersion;
+
+            using (NamedPipeClientStream pipeClient = new NamedPipeClientStream(".", "FFXIVIMDICGENERATORLocalVersionPipe", PipeDirection.In))
+            {
+                pipeClient.Connect();
+
+                using (StreamReader reader = new StreamReader(pipeClient))
+                {
+                    localVersion = reader.ReadLine();
+                }
+            }
+
             string apiUrl = "https://api.github.com/repos/AtmoOmen/FFXIV-IMDic-Generator-CN/releases/latest";
 
             using (HttpClient client = new HttpClient())

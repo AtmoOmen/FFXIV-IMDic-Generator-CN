@@ -2,7 +2,7 @@
 {
     public partial class Main : Form
     {
-        private string localVersion = "1.0.0.0";
+        private string localVersion = "1.0.3.0";
 
         private List<string> onlineItemFileLinks = new List<string>
         {

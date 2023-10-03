@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TinyPinyin;
 using System.Net;
+using System.IO.Pipes;
 
 #pragma warning disable CS8600, CS8603, CS8604, CS8622, CS8602
 
@@ -15,6 +16,15 @@ namespace FFXIVIMDicGenerator
         private void StartUpdateProgram()
         {
             Process.Start(Path.Combine(Environment.CurrentDirectory, "Update", "UpdateProgram.exe"));
+
+            using (NamedPipeServerStream pipeServer = new NamedPipeServerStream("FFXIVIMDICGENERATORLocalVersionPipe", PipeDirection.Out))
+            {
+                pipeServer.WaitForConnection();
+                using (StreamWriter writer = new StreamWriter(pipeServer))
+                {
+                    writer.WriteLine(localVersion);
+                }
+            }
         }
 
 
