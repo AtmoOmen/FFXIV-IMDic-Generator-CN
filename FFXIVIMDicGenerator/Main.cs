@@ -301,5 +301,10 @@ namespace FFXIVIMDicGenerator
             desFormatCombo.Enabled = true;
             onlineFileLinkEdit.Enabled = true;
         }
+
+        private void gitHubToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenUrl("https://github.com/AtmoOmen/FFXIV-IMDic-Generator-CN");
+        }
     }
 }

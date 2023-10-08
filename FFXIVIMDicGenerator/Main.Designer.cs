@@ -57,6 +57,7 @@
             progressBar = new ProgressBar();
             onlineFileList = new CheckedListBox();
             onlineSelectGroup = new GroupBox();
+            gitHubToolStripMenuItem = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             dataSourceGroup.SuspendLayout();
             convertGroup.SuspendLayout();
@@ -115,7 +116,7 @@
             // menuStrip1
             // 
             menuStrip1.ImageScalingSize = new Size(24, 24);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { ffxivdataminingcnToolStripMenuItem, 网络ToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { ffxivdataminingcnToolStripMenuItem, 网络ToolStripMenuItem, gitHubToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(841, 32);
@@ -340,6 +341,13 @@
             onlineSelectGroup.TabStop = false;
             onlineSelectGroup.Text = "在线生成数据源";
             // 
+            // gitHubToolStripMenuItem
+            // 
+            gitHubToolStripMenuItem.Name = "gitHubToolStripMenuItem";
+            gitHubToolStripMenuItem.Size = new Size(88, 28);
+            gitHubToolStripMenuItem.Text = "GitHub";
+            gitHubToolStripMenuItem.Click += gitHubToolStripMenuItem_Click;
+            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(11F, 24F);
@@ -397,5 +405,6 @@
         private Button btnReloadOnline;
         private ToolStripMenuItem 网络ToolStripMenuItem;
         private ToolStripMenuItem 国内镜像链接ToolStripMenuItem;
+        private ToolStripMenuItem gitHubToolStripMenuItem;
     }
 }
