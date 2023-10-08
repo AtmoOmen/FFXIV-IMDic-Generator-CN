@@ -330,6 +330,40 @@ namespace FFXIVIMDicGenerator
         private void InitializeCheckedBox()
         {
             onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
+
+            try
+            {
+                if (!File.Exists(LinksFilePath))
+                {
+                    GetDefaultLinksList();
+                    File.WriteAllLines(LinksFilePath, onlineItemFileLinks);
+                }
+
+                if (File.Exists(LinksFilePath))
+                {
+                    onlineLinksFromFile.AddRange(File.ReadAllLines(LinksFilePath));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"操作文件时发生错误: {ex.Message}");
+            }
+
+            onlineLinkstextbox.Text = "./Links.txt";
+
+            string fileContent = File.ReadAllText(LinksFilePath);
+
+            string pattern = @"(http://|https://)\S+";
+            MatchCollection matches = Regex.Matches(fileContent, pattern);
+
+            onlineLinkCountLabel.Text = $"当前链接数: {matches.Count}";
+
+            sourceFormatCombo.SelectedIndex = desFormatCombo.SelectedIndex = 0;
+
+            MaximizeBox = false;
+            MinimizeBox = true;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+
             foreach (var kvp in fileTypeNames)
             {
                 onlineFileList.Items.Add(kvp.Value);
@@ -457,32 +491,38 @@ namespace FFXIVIMDicGenerator
         {
             try
             {
-                var newDomain = "raw.gitmirror.com";
-                var oldDomain = "raw.githubusercontent.com";
-
-                // 读取文件内容
-                string filePath = LinksFilePath;
-                string[] lines = File.ReadAllLines(filePath);
-
-                // 创建一个列表用于存储替换后的内容
-                var replacedLines = new List<string>();
-
-                foreach (var line in lines)
+                if (File.Exists(LinksFilePath))
                 {
-                    // 替换匹配的域名
-                    var replacedLine = Regex.Replace(line, $@"https://(.*?){Regex.Escape(oldDomain)}", $"https://$1{newDomain}");
-                    replacedLines.Add(replacedLine);
+                    string filePath = LinksFilePath;
+                    string[] lines = File.ReadAllLines(filePath);
+
+                    var newDomain = "raw.gitmirror.com";
+                    var oldDomain = "raw.githubusercontent.com";
+
+                    var replacedLines = lines.Select(line =>
+                    {
+                        return Regex.Replace(line, $@"https://(.*?){Regex.Escape(oldDomain)}", $"https://$1{newDomain}");
+                    }).ToArray();
+
+                    File.WriteAllLines(filePath, replacedLines);
+
+                    RefreshOnlineRelatedComponents();
+
+                    while (File.ReadAllLines(filePath).Length == 0)
+                    {
+                        File.WriteAllLines(filePath, replacedLines);
+                    }
+
+                    CNMirrorReplace = true;
+
+                    MessageBox.Show("域名替换完成并写入文件成功！");
+
+
                 }
-
-                // 将替换后的内容写回文件
-                File.WriteAllLines(filePath, replacedLines);
-
-
-                MessageBox.Show("域名替换完成并写入文件成功！");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"发生错误：{ex.Message}");
+                MessageBox.Show($"发生错误：{ex.Message}");
             }
         }
 

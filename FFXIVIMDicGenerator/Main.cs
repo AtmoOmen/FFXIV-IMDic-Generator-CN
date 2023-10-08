@@ -21,9 +21,6 @@ namespace FFXIVIMDicGenerator
             StartUpdateProgram();
 
             AnalyzeDomains();
-
-            if (CNMirrorReplace) 国内镜像链接ToolStripMenuItem.Checked = true;
-            else 国内镜像链接ToolStripMenuItem.Checked = false;
         }
 
         // 浏览本地文件夹
@@ -147,48 +144,6 @@ namespace FFXIVIMDicGenerator
         // 主界面初始化
         private void Main_Load(object sender, EventArgs e)
         {
-            if (!File.Exists(LinksFilePath))
-            {
-                try
-                {
-                    GetDefaultLinksList();
-                    File.WriteAllLines(LinksFilePath, onlineItemFileLinks);
-                    RefreshOnlineRelatedComponents();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"写入文件时发生错误: {ex.Message}");
-                }
-            }
-
-            try
-            {
-                if (File.Exists(LinksFilePath))
-                {
-                    string[] lines = File.ReadAllLines(LinksFilePath);
-                    onlineLinksFromFile.AddRange(lines);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"读取文件时发生错误: {ex.Message}");
-            }
-
-            onlineLinkstextbox.Text = "./Links.txt";
-
-            string fileContent = File.ReadAllText(LinksFilePath);
-
-            string pattern = @"(http://|https://)\S+";
-            MatchCollection matches = Regex.Matches(fileContent, pattern);
-
-            onlineLinkCountLabel.Text = $"当前链接数: {matches.Count}";
-
-            sourceFormatCombo.SelectedIndex = 0;
-            desFormatCombo.SelectedIndex = 0;
-
-            MaximizeBox = false;
-            MinimizeBox = true;
-            FormBorderStyle = FormBorderStyle.FixedSingle;
         }
 
         // 菜单栏：相关工具/资料 ——开始——
@@ -293,7 +248,6 @@ namespace FFXIVIMDicGenerator
         // 重置在线文件链接文件
         private void btnReloadOnline_Click(object sender, EventArgs e)
         {
-            onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
             GetDefaultLinksList();
 
             try
@@ -301,13 +255,13 @@ namespace FFXIVIMDicGenerator
                 File.WriteAllLines(LinksFilePath, onlineItemFileLinks);
                 MessageBox.Show("重置成功");
 
-                RefreshOnlineRelatedComponents();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"重置时发生错误: {ex.Message}");
             }
-            onlineFileList.ItemCheck += onlineFileList_ItemCheck;
+
+            RefreshOnlineRelatedComponents();
 
         }
 
@@ -327,7 +281,6 @@ namespace FFXIVIMDicGenerator
         private void 国内镜像链接ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ReplaceDomainInFile();
-            RefreshOnlineRelatedComponents();
         }
 
         // 禁用/启用 所有按钮 (防止误操作)
