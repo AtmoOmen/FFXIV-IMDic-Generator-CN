@@ -28,7 +28,7 @@ namespace FFXIVIMDicGenerator
         }
 
 
-
+        // 处理 CSV 文件(总)
         private async Task ProcessCsvFile(string filePath, List<string> allData)
         {
             handleGroup.Text = $"处理中: {Path.GetFileName(filePath)}";
@@ -73,6 +73,7 @@ namespace FFXIVIMDicGenerator
             handleGroup.Text = $"处理完成: {Path.GetFileName(filePath)}";
         }
 
+        // 读取/下载具体的 CSV 文件，获取内容
         private async Task<List<string[]>> ReadCsvFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
@@ -350,22 +351,30 @@ namespace FFXIVIMDicGenerator
             onlineFileList.ItemCheck += onlineFileList_ItemCheck;
         }
 
-        private static bool AddLinkToFileIfNotExists(string fileName)
+        private bool AddLinkToFileIfNotExists(string fileName)
         {
-            var filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
-            var link = "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/" + fileName;
+            var link = string.Empty;
+
+            if (CNMirrorReplace)
+            {
+                link = "https://raw.gitmirror.com/thewakingsands/ffxiv-datamining-cn/master/" + fileName;
+            }
+            else
+            {
+                link = "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/" + fileName;
+            }
 
             try
             {
                 string pattern = $@"https?:\/\/.*?\/{Regex.Escape(fileName)}$";
                 Regex regex = new Regex(pattern);
-                List<string> lines = File.ReadAllLines(filePath).ToList();
+                List<string> lines = File.ReadAllLines(LinksFilePath).ToList();
 
                 if (!lines.Any(line => regex.IsMatch(line)))
                 {
                     lines.Add(link);
 
-                    File.WriteAllLines(filePath, lines);
+                    File.WriteAllLines(LinksFilePath, lines);
 
                     return true;
                 }
@@ -378,13 +387,12 @@ namespace FFXIVIMDicGenerator
             return false;
         }
 
-        private static bool RemoveLinkFromFileIfExists(string fileName)
+        private bool RemoveLinkFromFileIfExists(string fileName)
         {
-            var filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
 
             try
             {
-                List<string> lines = File.ReadAllLines(filePath).ToList();
+                List<string> lines = File.ReadAllLines(LinksFilePath).ToList();
 
                 string pattern = $@"https?:\/\/.*?\/{Regex.Escape(fileName)}$";
                 Regex regex = new Regex(pattern);
@@ -395,7 +403,7 @@ namespace FFXIVIMDicGenerator
                 {
                     lines.RemoveAt(indexToRemove);
 
-                    File.WriteAllLines(filePath, lines);
+                    File.WriteAllLines(LinksFilePath, lines);
 
                     return true;
                 }
@@ -408,6 +416,7 @@ namespace FFXIVIMDicGenerator
             return false;
         }
 
+        // 在线获取默认链接
         private void GetDefaultLinksList()
         {
             var fileUrl = "https://raw.githubusercontent.com/AtmoOmen/FFXIV-IMDic-Generator-CN/main/Assest/defaultLinks.txt";
@@ -443,20 +452,31 @@ namespace FFXIVIMDicGenerator
             }
         }
 
-        static void ReplaceDomainInFile()
+        // 批量替换域名
+        private void ReplaceDomainInFile()
         {
             try
             {
                 var newDomain = "raw.gitmirror.com";
                 var oldDomain = "raw.githubusercontent.com";
-                var filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
 
-                var fileContent = File.ReadAllText(filePath);
+                // 读取文件内容
+                string filePath = LinksFilePath;
+                string[] lines = File.ReadAllLines(filePath);
 
-                var pattern = @"https://(.*?)" + Regex.Escape(oldDomain);
-                var replacedContent = Regex.Replace(fileContent, pattern, $"https://${{1}}{newDomain}");
+                // 创建一个列表用于存储替换后的内容
+                var replacedLines = new List<string>();
 
-                File.WriteAllText(filePath, replacedContent);
+                foreach (var line in lines)
+                {
+                    // 替换匹配的域名
+                    var replacedLine = Regex.Replace(line, $@"https://(.*?){Regex.Escape(oldDomain)}", $"https://$1{newDomain}");
+                    replacedLines.Add(replacedLine);
+                }
+
+                // 将替换后的内容写回文件
+                File.WriteAllLines(filePath, replacedLines);
+
 
                 MessageBox.Show("域名替换完成并写入文件成功！");
             }
@@ -465,6 +485,63 @@ namespace FFXIVIMDicGenerator
                 Console.WriteLine($"发生错误：{ex.Message}");
             }
         }
+
+        // 检测 Links.txt 域名 (初始化用，不想写持久化配置的替代方案)
+        public void AnalyzeDomains()
+        {
+
+            try
+            {
+                string[] lines = File.ReadAllLines(LinksFilePath);
+
+                Dictionary<string, int> domainCount = new Dictionary<string, int>();
+
+                foreach (string line in lines)
+                {
+                    Uri uri;
+                    if (Uri.TryCreate(line, UriKind.Absolute, out uri))
+                    {
+                        string domain = uri.Host;
+
+                        // 移除www前缀（如果有的话）
+                        if (domain.StartsWith("www."))
+                        {
+                            domain = domain.Substring(4);
+                        }
+
+                        if (domainCount.ContainsKey(domain))
+                        {
+                            domainCount[domain]++;
+                        }
+                        else
+                        {
+                            domainCount[domain] = 1;
+                        }
+                    }
+                }
+
+                // 查找raw.githubusercontent.com域名的计数
+                if (domainCount.ContainsKey("raw.githubusercontent.com"))
+                {
+                    int rawGithubCount = domainCount["raw.githubusercontent.com"];
+
+                    if (domainCount.Values.Max() > rawGithubCount)
+                    {
+                        CNMirrorReplace = true;
+                    }
+                    else
+                    {
+                        CNMirrorReplace = false;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"发生异常: {ex.Message}");
+            }
+        }
+
 
         // 特殊目的用方法
         public static void ShowStringList(List<string> stringList)

@@ -19,8 +19,14 @@ namespace FFXIVIMDicGenerator
             InitializeCheckedBox();
 
             StartUpdateProgram();
+
+            AnalyzeDomains();
+
+            if (CNMirrorReplace) 国内镜像链接ToolStripMenuItem.Checked = true;
+            else 国内镜像链接ToolStripMenuItem.Checked = false;
         }
 
+        // 浏览本地文件夹
         private void btnBrowseFolder_Click(object sender, EventArgs e)
         {
             using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
@@ -36,6 +42,7 @@ namespace FFXIVIMDicGenerator
             }
         }
 
+        // 本地转换功能
         private async void btnConvert_Click(object sender, EventArgs e)
         {
             string folderPath = txtFolderPath.Text;
@@ -69,7 +76,6 @@ namespace FFXIVIMDicGenerator
                 await ProcessCsvFile(csvFile, allData);
             }
 
-            string outputFilePath = Path.Combine(Environment.CurrentDirectory, "output.txt");
             try
             {
                 File.WriteAllLines(outputFilePath, allData, Encoding.UTF8);
@@ -89,6 +95,8 @@ namespace FFXIVIMDicGenerator
             }
         }
 
+
+        // 在线文件生成功能
         private async void btnBrowseOnlineFiles_Click(object sender, EventArgs e)
         {
             disableAllbtns();
@@ -117,7 +125,6 @@ namespace FFXIVIMDicGenerator
                 progressBar.Value = processedFiles;
             }));
 
-            string outputFilePath = Path.Combine(Environment.CurrentDirectory, "output.txt");
             try
             {
                 File.WriteAllLines(outputFilePath, allData, Encoding.UTF8);
@@ -137,16 +144,15 @@ namespace FFXIVIMDicGenerator
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        // 主界面初始化
+        private void Main_Load(object sender, EventArgs e)
         {
-            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
-
-            if (!File.Exists(filePath))
+            if (!File.Exists(LinksFilePath))
             {
                 try
                 {
                     GetDefaultLinksList();
-                    File.WriteAllLines(filePath, onlineItemFileLinks);
+                    File.WriteAllLines(LinksFilePath, onlineItemFileLinks);
                     RefreshOnlineRelatedComponents();
                 }
                 catch (Exception ex)
@@ -157,9 +163,9 @@ namespace FFXIVIMDicGenerator
 
             try
             {
-                if (File.Exists(filePath))
+                if (File.Exists(LinksFilePath))
                 {
-                    string[] lines = File.ReadAllLines(filePath);
+                    string[] lines = File.ReadAllLines(LinksFilePath);
                     onlineLinksFromFile.AddRange(lines);
                 }
             }
@@ -170,7 +176,7 @@ namespace FFXIVIMDicGenerator
 
             onlineLinkstextbox.Text = "./Links.txt";
 
-            string fileContent = File.ReadAllText(filePath);
+            string fileContent = File.ReadAllText(LinksFilePath);
 
             string pattern = @"(http://|https://)\S+";
             MatchCollection matches = Regex.Matches(fileContent, pattern);
@@ -185,6 +191,7 @@ namespace FFXIVIMDicGenerator
             FormBorderStyle = FormBorderStyle.FixedSingle;
         }
 
+        // 菜单栏：相关工具/资料 ——开始——
         private void ffxivdataminingcnToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             OpenUrl("https://github.com/thewakingsands/ffxiv-datamining-cn");
@@ -195,65 +202,26 @@ namespace FFXIVIMDicGenerator
             OpenUrl("https://github.com/studyzy/imewlconverter");
         }
 
-        private void linkstxtToolStripMenuItem_Click(object sender, EventArgs e)
+        private void csv文件内容参考ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
+            OpenUrl("https://github.com/Souma-Sumire/FFXIVChnTextPatch-Souma/wiki/CSV%E6%96%87%E4%BB%B6");
         }
+        // 菜单栏：相关工具/资料 ——结束——
 
-        private void toolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
-            GetDefaultLinksList();
-
-            try
-            {
-                File.WriteAllLines(filePath, onlineItemFileLinks);
-                MessageBox.Show("重置成功");
-
-                RefreshOnlineRelatedComponents();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"重置时发生错误: {ex.Message}");
-            }
-        }
-
-        private void outputtxtToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            OpenFile(Path.Combine(Environment.CurrentDirectory, "output.txt"));
-        }
-
+        // 在线文件生成-编辑 Links.txt 功能
         private void onlineFileLinkEdit_Click(object sender, EventArgs e)
         {
             OpenFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
         }
-        private void disableAllbtns()
-        {
-            btnConvert.Enabled = false;
-            btnBrowseFolder.Enabled = false;
-            btnBrowseOnlineFiles.Enabled = false;
-            desFormatCombo.Enabled = false;
-            onlineFileLinkEdit.Enabled = false;
-        }
 
-        private void enableAllbtns()
-        {
-            btnConvert.Enabled = true;
-            btnBrowseFolder.Enabled = true;
-            btnBrowseOnlineFiles.Enabled = true;
-            desFormatCombo.Enabled = true;
-            onlineFileLinkEdit.Enabled = true;
-        }
-
+        // 刷新各种与在线文件生成功能相关的组件
         private void RefreshOnlineRelatedComponents(int param = -1)
         {
             onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
-            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
 
-
-            string fileContent = File.ReadAllText(filePath);
-            LinksName = GetFileNamesFromLinksFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
-            string[] lines = File.ReadAllLines(filePath);
+            string fileContent = File.ReadAllText(LinksFilePath);
+            LinksName = GetFileNamesFromLinksFile(LinksFilePath);
+            string[] lines = File.ReadAllLines(LinksFilePath);
 
             string pattern = @"(http://|https://)\S+";
             MatchCollection matches = Regex.Matches(fileContent, pattern);
@@ -289,11 +257,7 @@ namespace FFXIVIMDicGenerator
             onlineFileList.ItemCheck += onlineFileList_ItemCheck;
         }
 
-        private void csv文件内容参考ToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            OpenUrl("https://github.com/Souma-Sumire/FFXIVChnTextPatch-Souma/wiki/CSV%E6%96%87%E4%BB%B6");
-        }
-
+        // 列表框内选项状态更改
         private void onlineFileList_ItemCheck(object sender, ItemCheckEventArgs e)
         {
             string selectedItem = onlineFileList.Items[e.Index].ToString();
@@ -326,15 +290,15 @@ namespace FFXIVIMDicGenerator
             RefreshOnlineRelatedComponents(0);
         }
 
+        // 重置在线文件链接文件
         private void btnReloadOnline_Click(object sender, EventArgs e)
         {
             onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
-            string filePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
             GetDefaultLinksList();
 
             try
             {
-                File.WriteAllLines(filePath, onlineItemFileLinks);
+                File.WriteAllLines(LinksFilePath, onlineItemFileLinks);
                 MessageBox.Show("重置成功");
 
                 RefreshOnlineRelatedComponents();
@@ -347,9 +311,10 @@ namespace FFXIVIMDicGenerator
 
         }
 
+        // 点击在线链接数标签后重置各种相关状态
         private void onlineLinkCountLabel_Click(object sender, EventArgs e)
         {
-            if (!File.Exists(Path.Combine(Environment.CurrentDirectory, "Links.txt")))
+            if (!File.Exists(LinksFilePath))
             {
                 onlineLinkstextbox.Text = "读取错误，请重置！";
                 return;
@@ -358,9 +323,30 @@ namespace FFXIVIMDicGenerator
             RefreshOnlineRelatedComponents();
         }
 
+        // 替换为国内镜像链接 (gitmirror)
         private void 国内镜像链接ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ReplaceDomainInFile();
+            RefreshOnlineRelatedComponents();
+        }
+
+        // 禁用/启用 所有按钮 (防止误操作)
+        private void disableAllbtns()
+        {
+            btnConvert.Enabled = false;
+            btnBrowseFolder.Enabled = false;
+            btnBrowseOnlineFiles.Enabled = false;
+            desFormatCombo.Enabled = false;
+            onlineFileLinkEdit.Enabled = false;
+        }
+
+        private void enableAllbtns()
+        {
+            btnConvert.Enabled = true;
+            btnBrowseFolder.Enabled = true;
+            btnBrowseOnlineFiles.Enabled = true;
+            desFormatCombo.Enabled = true;
+            onlineFileLinkEdit.Enabled = true;
         }
     }
 }
