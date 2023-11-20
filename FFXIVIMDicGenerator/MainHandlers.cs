@@ -1,11 +1,9 @@
-﻿using System.Diagnostics;
-using System.IO.Compression;
-using Newtonsoft.Json.Linq;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.IO.Pipes;
 using System.Text;
 using System.Text.RegularExpressions;
 using TinyPinyin;
-using System.Net;
-using System.IO.Pipes;
 
 #pragma warning disable CS8600, CS8603, CS8604, CS8622, CS8602
 
@@ -17,18 +15,14 @@ namespace FFXIVIMDicGenerator
         {
             Process.Start(Path.Combine(Environment.CurrentDirectory, "Update", "UpdateProgram.exe"));
 
-            using (NamedPipeServerStream pipeServer = new NamedPipeServerStream("FFXIVIMDICGENERATORLocalVersionPipe", PipeDirection.Out))
+            using NamedPipeServerStream pipeServer = new("FFXIVIMDICGENERATORLocalVersionPipe", PipeDirection.Out);
+            pipeServer.WaitForConnection();
+            using (StreamWriter writer = new StreamWriter(pipeServer))
             {
-                pipeServer.WaitForConnection();
-                using (StreamWriter writer = new StreamWriter(pipeServer))
-                {
-                    writer.WriteLine(localVersion);
-                }
+                writer.WriteLine(localVersion);
             }
         }
 
-
-        // 处理 CSV 文件(总)
         private async Task ProcessCsvFile(string filePath, List<string> allData)
         {
             handleGroup.Text = $"处理中: {Path.GetFileName(filePath)}";
@@ -41,10 +35,9 @@ namespace FFXIVIMDicGenerator
                 return;
             }
 
-            Dictionary<string, string> pinyinDictionary = new Dictionary<string, string>();
-            List<Task> tasks = new List<Task>();
+            ConcurrentDictionary<string, string> pinyinDictionary = new();
 
-            foreach (var keyword in keywords)
+            Parallel.ForEach(keywords, keyword =>
             {
                 int columnIndex = FindColumnIndex(rows[1], keyword);
 
@@ -59,11 +52,7 @@ namespace FFXIVIMDicGenerator
                         pinyinDictionary[name] = pinyin;
                     }
                 }
-
-                tasks.Add(Task.Delay(100));
-            }
-
-            await Task.WhenAll(tasks);
+            });
 
             foreach (var kvp in pinyinDictionary)
             {
@@ -73,8 +62,7 @@ namespace FFXIVIMDicGenerator
             handleGroup.Text = $"处理完成: {Path.GetFileName(filePath)}";
         }
 
-        // 读取/下载具体的 CSV 文件，获取内容
-        private async Task<List<string[]>> ReadCsvFile(string filePath)
+        private static async Task<List<string[]>> ReadCsvFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
             {
@@ -85,37 +73,32 @@ namespace FFXIVIMDicGenerator
             {
                 if (filePath.StartsWith("http") || filePath.StartsWith("https"))
                 {
-                    using (var httpClient = new HttpClient(new HttpClientHandler { MaxConnectionsPerServer = 10 }))
+                    HttpResponseMessage response = await httpClient.GetAsync(filePath);
+                    if (response.IsSuccessStatusCode)
                     {
-                        HttpResponseMessage response = await httpClient.GetAsync(filePath);
-                        if (response.IsSuccessStatusCode)
+                        using Stream stream = await response.Content.ReadAsStreamAsync();
+                        using StreamReader reader = new(stream);
+                        var rows = new List<string[]>();
+                        string? line;
+                        long bytesRead = 0;
+                        while ((line = await reader.ReadLineAsync()) != null)
                         {
-                            using (Stream stream = await response.Content.ReadAsStreamAsync())
-                            using (StreamReader reader = new StreamReader(stream))
-                            {
-                                var rows = new List<string[]>();
-                                string? line;
-                                long bytesRead = 0;
-                                while ((line = await reader.ReadLineAsync()) != null)
-                                {
-                                    bytesRead += Encoding.UTF8.GetByteCount(line);
-                                    rows.Add(line.Split(','));
-
-                                }
-                                return rows;
-                            }
+                            bytesRead += Encoding.UTF8.GetByteCount(line);
+                            rows.Add(line.Split(','));
                         }
-                        else
-                        {
-                            MessageBox.Show($"下载文件时发生错误: {response.ReasonPhrase}");
-                        }
+                        return rows;
+                    }
+                    else
+                    {
+                        MessageBox.Show($"下载文件时发生错误: {response.ReasonPhrase}");
                     }
                 }
                 else
                 {
-                    var lines = await File.ReadAllLinesAsync(filePath, Encoding.UTF8);
-                    var rows = new List<string[]>(lines.Length);
-                    foreach (var line in lines)
+                    using var reader = new StreamReader(filePath, Encoding.UTF8);
+                    var rows = new List<string[]>();
+                    string? line;
+                    while ((line = await reader.ReadLineAsync()) != null)
                     {
                         rows.Add(line.Split(','));
                     }
@@ -124,15 +107,15 @@ namespace FFXIVIMDicGenerator
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"读取CSV文件时发生错误: {ex.Message}");
+                MessageBox.Show($"下载文件时发生错误: {ex.Message}");
             }
 
             return null;
         }
 
-        private List<string> ExtractNames(List<string[]> rows, int columnIndex)
+        private static List<string> ExtractNames(List<string[]> rows, int columnIndex)
         {
-            List<string> names = new List<string>();
+            List<string> names = new();
 
             foreach (string[] row in rows)
             {
@@ -150,7 +133,7 @@ namespace FFXIVIMDicGenerator
             return names;
         }
 
-        private int FindColumnIndex(string[] headerRow, string columnName)
+        private static int FindColumnIndex(string[] headerRow, string columnName)
         {
             for (int i = 0; i < headerRow.Length; i++)
             {
@@ -163,7 +146,7 @@ namespace FFXIVIMDicGenerator
             return -1;
         }
 
-        private int RemoveDuplicates(string filePath)
+        private static int RemoveDuplicates(string filePath)
         {
             int removedItemCount = 0;
 
@@ -188,7 +171,7 @@ namespace FFXIVIMDicGenerator
             return removedItemCount;
         }
 
-        private void OpenFolder(string folderPath)
+        private static void OpenFolder(string folderPath)
         {
             try
             {
@@ -423,7 +406,6 @@ namespace FFXIVIMDicGenerator
 
         private bool RemoveLinkFromFileIfExists(string fileName)
         {
-
             try
             {
                 List<string> lines = File.ReadAllLines(LinksFilePath).ToList();
@@ -516,8 +498,6 @@ namespace FFXIVIMDicGenerator
                     CNMirrorReplace = true;
 
                     MessageBox.Show("域名替换完成并写入文件成功！");
-
-
                 }
             }
             catch (Exception ex)
@@ -529,7 +509,6 @@ namespace FFXIVIMDicGenerator
         // 检测 Links.txt 域名 (初始化用，不想写持久化配置的替代方案)
         public void AnalyzeDomains()
         {
-
             try
             {
                 string[] lines = File.ReadAllLines(LinksFilePath);
@@ -574,14 +553,12 @@ namespace FFXIVIMDicGenerator
                         CNMirrorReplace = false;
                     }
                 }
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"发生异常: {ex.Message}");
             }
         }
-
 
         // 特殊目的用方法
         public static void ShowStringList(List<string> stringList)

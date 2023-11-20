@@ -1,8 +1,5 @@
-using System.Collections.Generic;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 
 namespace FFXIVIMDicGenerator
 {
@@ -57,7 +54,7 @@ namespace FFXIVIMDicGenerator
                 return;
             }
 
-            List<string> allData = new List<string>();
+            List<string> allData = new();
 
             string[] csvFiles = Directory.GetFiles(folderPath, "*.csv");
             if (csvFiles.Length == 0)
@@ -68,10 +65,8 @@ namespace FFXIVIMDicGenerator
 
             disableAllbtns();
 
-            foreach (string csvFile in csvFiles)
-            {
-                await ProcessCsvFile(csvFile, allData);
-            }
+            var tasks = csvFiles.Select(csvFile => ProcessCsvFile(csvFile, allData)).ToArray();
+            await Task.WhenAll(tasks);
 
             try
             {
@@ -91,7 +86,6 @@ namespace FFXIVIMDicGenerator
                 handleGroup.Text = "生成";
             }
         }
-
 
         // 在线文件生成功能
         private async void btnBrowseOnlineFiles_Click(object sender, EventArgs e)
@@ -161,6 +155,7 @@ namespace FFXIVIMDicGenerator
         {
             OpenUrl("https://github.com/Souma-Sumire/FFXIVChnTextPatch-Souma/wiki/CSV%E6%96%87%E4%BB%B6");
         }
+
         // 菜单栏：相关工具/资料 ——结束——
 
         // 在线文件生成-编辑 Links.txt 功能
@@ -254,7 +249,6 @@ namespace FFXIVIMDicGenerator
             {
                 File.WriteAllLines(LinksFilePath, onlineItemFileLinks);
                 MessageBox.Show("重置成功");
-
             }
             catch (Exception ex)
             {
@@ -262,7 +256,6 @@ namespace FFXIVIMDicGenerator
             }
 
             RefreshOnlineRelatedComponents();
-
         }
 
         // 点击在线链接数标签后重置各种相关状态

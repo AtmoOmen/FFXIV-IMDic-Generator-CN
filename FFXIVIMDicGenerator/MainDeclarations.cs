@@ -2,7 +2,9 @@
 {
     public partial class Main : Form
     {
-        private string localVersion = "1.0.4.0";
+        private string localVersion = "1.0.5.0";
+
+        private static readonly HttpClient httpClient = new(new HttpClientHandler { MaxConnectionsPerServer = 32 });
 
         internal string LinksFilePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
 
