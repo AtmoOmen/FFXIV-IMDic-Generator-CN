@@ -132,14 +132,19 @@ namespace FFXIVIMDicGenerator
 
         private async Task<List<string>> ProcessOnlineFiles()
         {
-            var allData = new List<string>();
-            foreach (var link in _onlineLinksFromFile.Where(link => !string.IsNullOrEmpty(link)))
-            {
-                await ProcessCsvFile(link, allData);
-                progressBar.Value++;
-            }
+            var allData = new List<string>(); 
+
+            var tasks = _onlineLinksFromFile.Where(link => !string.IsNullOrEmpty(link))
+                .Select(link => ProcessCsvFile(link, allData))
+                .ToList();
+
+            await Task.WhenAll(tasks);
+
+            progressBar.Value = _onlineLinksFromFile.Count;
+
             return allData;
         }
+
 
         // 主界面初始化
         private void Main_Load(object sender, EventArgs e)

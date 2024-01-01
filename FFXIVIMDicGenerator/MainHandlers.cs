@@ -27,15 +27,26 @@ namespace FFXIVIMDicGenerator
             var rows = await ReadCsvFile(filePath);
             if (rows.Count < 2) return;
 
+            var columnIndices = _keywords.Select(keyword => FindColumnIndex(rows[1], keyword))
+                .Where(columnIndex => columnIndex != -1)
+                .ToList();
+
             var uniqueNames = new HashSet<string>();
-            foreach (var columnIndex in _keywords.Select(keyword => FindColumnIndex(rows[1], keyword)).Where(columnIndex => columnIndex != -1))
+            foreach (var columnIndex in columnIndices)
             {
                 uniqueNames.UnionWith(ExtractNames(rows, columnIndex));
             }
 
+            var stringBuilder = new StringBuilder();
+
             var pinyinMap = uniqueNames.AsParallel().ToDictionary(
                 name => name,
-                name => "'" + PinyinHelper.GetPinyin(name, "'").ToLower()
+                name => {
+                    var pinyin = PinyinHelper.GetPinyin(name, "'");
+                    stringBuilder.Clear();
+                    stringBuilder.Append('\'').Append(pinyin.ToLower());
+                    return stringBuilder.ToString();
+                }
             );
 
             var pinyinDictionary = new ConcurrentDictionary<string, string>(pinyinMap);
@@ -43,6 +54,7 @@ namespace FFXIVIMDicGenerator
             allData.AddRange(pinyinDictionary.Select(kvp => $"{kvp.Value} {kvp.Key}"));
             handleGroup.Text = $"处理完成: {Path.GetFileName(filePath)}";
         }
+
 
 
         private static async Task<List<string[]>> ReadCsvFile(string filePath)
