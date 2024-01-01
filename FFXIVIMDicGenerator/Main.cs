@@ -37,100 +37,108 @@ namespace FFXIVIMDicGenerator
         // 本地转换功能
         private async void btnConvert_Click(object sender, EventArgs e)
         {
-            string folderPath = txtFolderPath.Text;
-
-            if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
+            if (!IsValidFolderPath(txtFolderPath.Text))
             {
                 MessageBox.Show("请选择有效的文件夹");
                 return;
             }
 
-            var format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
+            string format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
             if (string.IsNullOrEmpty(format) || format == "未知")
             {
                 MessageBox.Show("请选择有效的格式转换类型");
                 return;
             }
 
-            List<string> allData = new();
-
-            string[] csvFiles = Directory.GetFiles(folderPath, "*.csv");
-            if (csvFiles.Length == 0)
-            {
-                MessageBox.Show("文件夹中没有找到任何 CSV 文件");
-                return;
-            }
-
-            DisableAllbtns();
-
-            var tasks = csvFiles.Select(csvFile => ProcessCsvFile(csvFile, allData)).ToArray();
-            await Task.WhenAll(tasks);
-
             try
             {
-                File.WriteAllLines(_outputFilePath, allData, Encoding.UTF8);
-                var removedData = RemoveDuplicates(_outputFilePath);
-                OpenConvertCmd(format);
-                MessageBox.Show($"处理完成，共 {allData.Count - removedData} 条\n" +
-                    $"输出文件位于: {_outputFilePath}");
-                EnableAllbtns();
-                handleGroup.Text = "生成";
-                OpenFolder(Environment.CurrentDirectory);
+                DisableAllbtns();
+                await ProcessFolder(txtFolderPath.Text, format);
+                MessageBox.Show("处理完成！");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"保存文件时发生错误: {ex.Message}");
+                MessageBox.Show($"处理时发生错误: {ex.Message}");
+            }
+            finally
+            {
                 EnableAllbtns();
                 handleGroup.Text = "生成";
             }
         }
 
+        private bool IsValidFolderPath(string folderPath)
+        {
+            return !string.IsNullOrWhiteSpace(folderPath) && Directory.Exists(folderPath);
+        }
+
+        private async Task ProcessFolder(string folderPath, string format)
+        {
+            var allData = new List<string>();
+            var csvFiles = Directory.GetFiles(folderPath, "*.csv");
+
+            if (csvFiles.Length == 0)
+            {
+                throw new InvalidOperationException("文件夹中没有找到任何 CSV 文件");
+            }
+
+            var tasks = csvFiles.Select(csvFile => ProcessCsvFile(csvFile, allData)).ToArray();
+            await Task.WhenAll(tasks);
+
+            File.WriteAllLines(_outputFilePath, allData, Encoding.UTF8);
+            OpenConvertCmd(format);
+            OpenFolder(Environment.CurrentDirectory);
+        }
+
+
         // 在线文件生成功能
         private async void btnBrowseOnlineFiles_Click(object sender, EventArgs e)
         {
-            DisableAllbtns();
-            List<string> allData = new List<string>();
-
-            var format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
-            if (string.IsNullOrEmpty(format) || format == "未知")
+            if (!IsValidFormatSelected())
             {
                 MessageBox.Show("请选择有效的格式转换类型");
                 return;
             }
 
-            _onlineLinksFromFile = _onlineLinksFromFile.Where(link => !string.IsNullOrEmpty(link)).ToList();
-
-            int totalFiles = _onlineLinksFromFile.Count;
-            int processedFiles = 0;
-
-            progressBar.Maximum = totalFiles;
-            progressBar.Value = 0;
-
-            await Task.WhenAll(_onlineLinksFromFile.Select(async link =>
-            {
-                await ProcessCsvFile(link, allData);
-
-                processedFiles++;
-                progressBar.Value = processedFiles;
-            }));
-
             try
             {
+                DisableAllbtns();
+                progressBar.Maximum = _onlineLinksFromFile.Count;
+                progressBar.Value = 0;
+
+                var allData = await ProcessOnlineFiles();
+
                 File.WriteAllLines(_outputFilePath, allData, Encoding.UTF8);
-                var removedData = RemoveDuplicates(_outputFilePath);
-                OpenConvertCmd(format);
-                MessageBox.Show($"处理完成，共 {allData.Count - removedData} 条\n" +
-                    $"输出文件位于: {_outputFilePath}");
+                OpenConvertCmd(GetDesConvertType(desFormatCombo.SelectedItem.ToString()));
+                MessageBox.Show($"处理完成，共 {allData.Count} 条\n输出文件位于: {_outputFilePath}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"处理时发生错误: {ex.Message}");
+            }
+            finally
+            {
                 EnableAllbtns();
                 handleGroup.Text = "生成";
                 OpenFolder(Environment.CurrentDirectory);
             }
-            catch (Exception ex)
+        }
+
+        private bool IsValidFormatSelected()
+        {
+            var format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
+            return !string.IsNullOrEmpty(format) && format != "未知";
+        }
+
+        private async Task<List<string>> ProcessOnlineFiles()
+        {
+            var allData = new List<string>();
+            foreach (var link in _onlineLinksFromFile.Where(link => !string.IsNullOrEmpty(link)))
             {
-                MessageBox.Show($"保存文件时发生错误: {ex.Message}");
-                EnableAllbtns();
-                handleGroup.Text = "生成";
+                await ProcessCsvFile(link, allData);
+                progressBar.Value++;
             }
+            return allData;
         }
 
         // 主界面初始化

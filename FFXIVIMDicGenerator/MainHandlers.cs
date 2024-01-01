@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO.Pipes;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -24,17 +25,25 @@ namespace FFXIVIMDicGenerator
         {
             handleGroup.Text = $"处理中: {Path.GetFileName(filePath)}";
             var rows = await ReadCsvFile(filePath);
-            if (rows == null || rows.Count < 2) return;
+            if (rows.Count < 2) return;
 
-            var pinyinDictionary = _keywords.AsParallel().SelectMany(keyword =>
+            var uniqueNames = new HashSet<string>();
+            foreach (var columnIndex in _keywords.Select(keyword => FindColumnIndex(rows[1], keyword)).Where(columnIndex => columnIndex != -1))
             {
-                int columnIndex = FindColumnIndex(rows[1], keyword);
-                return columnIndex != -1 ? ExtractNames(rows, columnIndex) : Enumerable.Empty<string>();
-            }).ToDictionary(name => name, name => "'" + PinyinHelper.GetPinyin(name, "'").ToLower());
+                uniqueNames.UnionWith(ExtractNames(rows, columnIndex));
+            }
+
+            var pinyinMap = uniqueNames.AsParallel().ToDictionary(
+                name => name,
+                name => "'" + PinyinHelper.GetPinyin(name, "'").ToLower()
+            );
+
+            var pinyinDictionary = new ConcurrentDictionary<string, string>(pinyinMap);
 
             allData.AddRange(pinyinDictionary.Select(kvp => $"{kvp.Value} {kvp.Key}"));
             handleGroup.Text = $"处理完成: {Path.GetFileName(filePath)}";
         }
+
 
         private static async Task<List<string[]>> ReadCsvFile(string filePath)
         {
@@ -42,12 +51,11 @@ namespace FFXIVIMDicGenerator
 
             try
             {
-                using Stream stream = filePath.StartsWith("http") ?
+                using var stream = filePath.StartsWith("http") ?
                     await HttpClient.GetStreamAsync(filePath) : File.OpenRead(filePath);
                 using StreamReader reader = new(stream, Encoding.UTF8);
                 var rows = new List<string[]>();
-                string? line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                while (await reader.ReadLineAsync() is { } line)
                     rows.Add(line.Split(','));
                 return rows;
             }
@@ -58,7 +66,7 @@ namespace FFXIVIMDicGenerator
             }
         }
 
-        private static List<string> ExtractNames(List<string[]> rows, int columnIndex)
+        private static IEnumerable<string> ExtractNames(IEnumerable<string[]> rows, int columnIndex)
         {
             return rows.Where(row => row.Length > columnIndex)
                        .Select(row => Regex.Replace(row[columnIndex].Trim(), @"[^\u4e00-\u9fa5]", ""))
@@ -69,23 +77,6 @@ namespace FFXIVIMDicGenerator
         private static int FindColumnIndex(string[] headerRow, string columnName)
         {
             return Array.FindIndex(headerRow, header => header.Trim() == columnName);
-        }
-
-        private static int RemoveDuplicates(string filePath)
-        {
-            try
-            {
-                var lines = new HashSet<string>(File.ReadAllLines(filePath, Encoding.UTF8));
-                if (lines.Count == 0) return 0;
-
-                File.WriteAllLines(filePath, lines, Encoding.UTF8);
-                return lines.Count;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"处理重复项时发生错误: {ex.Message}");
-                return 0;
-            }
         }
 
 
