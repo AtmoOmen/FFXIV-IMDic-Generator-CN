@@ -2,10 +2,11 @@ using System.Diagnostics;
 using Newtonsoft.Json.Linq;
 using System.IO.Pipes;
 using static System.String;
+using System.IO.Compression;
 
 namespace UpdateProgram
 {
-    public partial class Update : Form
+    public class Update : Form
     {
         private const string MutexName = "FFXIVIMDICGENERATORUpdateMutex";
         private static readonly HttpClient HttpClient = new();
@@ -99,13 +100,18 @@ namespace UpdateProgram
             var tempZipPath = Path.Combine(Path.GetTempPath(), "update.zip");
             File.WriteAllBytes(tempZipPath, zipData);
 
+            var extractionPath = Path.Combine(Path.GetTempPath(), "extracted");
+            Directory.CreateDirectory(extractionPath);
+            ZipFile.ExtractToDirectory(tempZipPath, extractionPath);
+
             var batFilePath = Path.Combine(Path.GetTempPath(), "update.bat");
             using (var batFile = new StreamWriter(batFilePath))
             {
                 batFile.WriteLine("@echo off");
                 batFile.WriteLine("timeout /t 5 /nobreak");
                 batFile.WriteLine($"del \"{Path.Combine(Application.StartupPath, "FFXIVIMDicGenerator.exe")}\"");
-                batFile.WriteLine($"expand \"{tempZipPath}\" -F:* \"{Path.GetDirectoryName(Application.ExecutablePath)}\"");
+                batFile.WriteLine($"xcopy \"{extractionPath}\\*\" \"{Path.GetDirectoryName(Application.ExecutablePath)}\" /E /H /C /I");
+                batFile.WriteLine($"rd /s /q \"{extractionPath}\"");
                 batFile.WriteLine($"del \"{tempZipPath}\"");
                 batFile.WriteLine($"start \"\" \"{Path.Combine(Application.StartupPath, "FFXIVIMDicGenerator.exe")}\"");
                 batFile.WriteLine($"del \"%~f0\"");
@@ -115,6 +121,7 @@ namespace UpdateProgram
             Process.Start(batFilePath);
             Application.Exit();
         }
+
 
         private static void CloseOriginalProgram()
         {
