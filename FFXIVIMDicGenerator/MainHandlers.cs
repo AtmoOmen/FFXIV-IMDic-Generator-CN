@@ -1,11 +1,8 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO.Pipes;
 using System.Text;
 using System.Text.RegularExpressions;
 using TinyPinyin;
-
-#pragma warning disable CS8600, CS8603, CS8604, CS8622, CS8602
 
 namespace FFXIVIMDicGenerator
 {
@@ -19,157 +16,78 @@ namespace FFXIVIMDicGenerator
             pipeServer.WaitForConnection();
             using (StreamWriter writer = new StreamWriter(pipeServer))
             {
-                writer.WriteLine(localVersion);
+                writer.WriteLine(LocalVersion);
             }
         }
 
         private async Task ProcessCsvFile(string filePath, List<string> allData)
         {
             handleGroup.Text = $"处理中: {Path.GetFileName(filePath)}";
+            var rows = await ReadCsvFile(filePath);
+            if (rows == null || rows.Count < 2) return;
 
-            List<string[]> rows = await ReadCsvFile(filePath);
-
-            if (rows == null || rows.Count < 2)
-            {
-                handleGroup.Text = $"处理完成: {Path.GetFileName(filePath)}";
-                return;
-            }
-
-            ConcurrentDictionary<string, string> pinyinDictionary = new();
-
-            Parallel.ForEach(keywords, keyword =>
+            var pinyinDictionary = _keywords.AsParallel().SelectMany(keyword =>
             {
                 int columnIndex = FindColumnIndex(rows[1], keyword);
+                return columnIndex != -1 ? ExtractNames(rows, columnIndex) : Enumerable.Empty<string>();
+            }).ToDictionary(name => name, name => "'" + PinyinHelper.GetPinyin(name, "'").ToLower());
 
-                if (columnIndex != -1)
-                {
-                    List<string> names = ExtractNames(rows, columnIndex);
-
-                    foreach (string name in names)
-                    {
-                        string pinyin = PinyinHelper.GetPinyin(name, "'");
-                        pinyin = "'" + pinyin.ToLower();
-                        pinyinDictionary[name] = pinyin;
-                    }
-                }
-            });
-
-            foreach (var kvp in pinyinDictionary)
-            {
-                allData.Add($"{kvp.Value} {kvp.Key}");
-            }
-
+            allData.AddRange(pinyinDictionary.Select(kvp => $"{kvp.Value} {kvp.Key}"));
             handleGroup.Text = $"处理完成: {Path.GetFileName(filePath)}";
         }
 
         private static async Task<List<string[]>> ReadCsvFile(string filePath)
         {
-            if (string.IsNullOrEmpty(filePath))
-            {
-                return null;
-            }
+            if (string.IsNullOrEmpty(filePath)) return null;
 
             try
             {
-                if (filePath.StartsWith("http") || filePath.StartsWith("https"))
-                {
-                    HttpResponseMessage response = await httpClient.GetAsync(filePath);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        using Stream stream = await response.Content.ReadAsStreamAsync();
-                        using StreamReader reader = new(stream);
-                        var rows = new List<string[]>();
-                        string? line;
-                        long bytesRead = 0;
-                        while ((line = await reader.ReadLineAsync()) != null)
-                        {
-                            bytesRead += Encoding.UTF8.GetByteCount(line);
-                            rows.Add(line.Split(','));
-                        }
-                        return rows;
-                    }
-                    else
-                    {
-                        MessageBox.Show($"下载文件时发生错误: {response.ReasonPhrase}");
-                    }
-                }
-                else
-                {
-                    using var reader = new StreamReader(filePath, Encoding.UTF8);
-                    var rows = new List<string[]>();
-                    string? line;
-                    while ((line = await reader.ReadLineAsync()) != null)
-                    {
-                        rows.Add(line.Split(','));
-                    }
-                    return rows;
-                }
+                using Stream stream = filePath.StartsWith("http") ?
+                    await HttpClient.GetStreamAsync(filePath) : File.OpenRead(filePath);
+                using StreamReader reader = new(stream, Encoding.UTF8);
+                var rows = new List<string[]>();
+                string? line;
+                while ((line = await reader.ReadLineAsync()) != null)
+                    rows.Add(line.Split(','));
+                return rows;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"下载文件时发生错误: {ex.Message}");
+                MessageBox.Show($"读取文件时发生错误: {ex.Message}");
+                return null;
             }
-
-            return null;
         }
 
         private static List<string> ExtractNames(List<string[]> rows, int columnIndex)
         {
-            List<string> names = new();
-
-            foreach (string[] row in rows)
-            {
-                if (row.Length > columnIndex)
-                {
-                    string name = row[columnIndex].Trim();
-                    name = Regex.Replace(name, @"[^\u4e00-\u9fa5]", "");
-                    if (!string.IsNullOrWhiteSpace(name) && name.Length > 1)
-                    {
-                        names.Add(name);
-                    }
-                }
-            }
-
-            return names;
+            return rows.Where(row => row.Length > columnIndex)
+                       .Select(row => Regex.Replace(row[columnIndex].Trim(), @"[^\u4e00-\u9fa5]", ""))
+                       .Where(name => !string.IsNullOrWhiteSpace(name) && name.Length > 1)
+                       .ToList();
         }
 
         private static int FindColumnIndex(string[] headerRow, string columnName)
         {
-            for (int i = 0; i < headerRow.Length; i++)
-            {
-                if (headerRow[i].Trim() == columnName)
-                {
-                    return i;
-                }
-            }
-
-            return -1;
+            return Array.FindIndex(headerRow, header => header.Trim() == columnName);
         }
 
         private static int RemoveDuplicates(string filePath)
         {
-            int removedItemCount = 0;
-
             try
             {
-                List<string> lines = File.ReadAllLines(filePath, Encoding.UTF8).ToList();
-                HashSet<string> uniqueLines = new HashSet<string>(lines);
+                var lines = new HashSet<string>(File.ReadAllLines(filePath, Encoding.UTF8));
+                if (lines.Count == 0) return 0;
 
-                if (lines.Count != uniqueLines.Count)
-                {
-                    removedItemCount = lines.Count - uniqueLines.Count;
-
-                    lines = uniqueLines.ToList();
-                    File.WriteAllLines(filePath, lines, Encoding.UTF8);
-                }
+                File.WriteAllLines(filePath, lines, Encoding.UTF8);
+                return lines.Count;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"处理重复项时发生错误: {ex.Message}");
+                return 0;
             }
-
-            return removedItemCount;
         }
+
 
         private static void OpenFolder(string folderPath)
         {
@@ -267,7 +185,7 @@ namespace FFXIVIMDicGenerator
 
         private string GetDesConvertType(string sourceName)
         {
-            return desTypes.TryGetValue(sourceName, out string? desType) ? desType : "未知";
+            return _desTypes.TryGetValue(sourceName, out string? desType) ? desType : "未知";
         }
 
         private List<string> GetFileNamesFromLinksFile(string filePath)
@@ -277,7 +195,7 @@ namespace FFXIVIMDicGenerator
                 try
                 {
                     GetDefaultLinksList();
-                    File.WriteAllLines(filePath, onlineItemFileLinks);
+                    File.WriteAllLines(filePath, _onlineItemFileLinks);
                     RefreshOnlineRelatedComponents();
                 }
                 catch (Exception ex)
@@ -319,12 +237,12 @@ namespace FFXIVIMDicGenerator
                 if (!File.Exists(LinksFilePath))
                 {
                     GetDefaultLinksList();
-                    File.WriteAllLines(LinksFilePath, onlineItemFileLinks);
+                    File.WriteAllLines(LinksFilePath, _onlineItemFileLinks);
                 }
 
                 if (File.Exists(LinksFilePath))
                 {
-                    onlineLinksFromFile.AddRange(File.ReadAllLines(LinksFilePath));
+                    _onlineLinksFromFile.AddRange(File.ReadAllLines(LinksFilePath));
                 }
             }
             catch (Exception ex)
@@ -347,16 +265,16 @@ namespace FFXIVIMDicGenerator
             MinimizeBox = true;
             FormBorderStyle = FormBorderStyle.FixedSingle;
 
-            foreach (var kvp in fileTypeNames)
+            foreach (var kvp in _fileTypeNames)
             {
                 onlineFileList.Items.Add(kvp.Value);
             }
 
-            LinksName = GetFileNamesFromLinksFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
+            _linksName = GetFileNamesFromLinksFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
 
-            foreach (var kvp in LinksName)
+            foreach (var kvp in _linksName)
             {
-                List<string> keys = fileTypeNames.Keys.ToList();
+                List<string> keys = _fileTypeNames.Keys.ToList();
 
                 var index = keys.IndexOf(kvp);
 
@@ -372,7 +290,7 @@ namespace FFXIVIMDicGenerator
         {
             var link = string.Empty;
 
-            if (CNMirrorReplace)
+            if (_cnMirrorReplace)
             {
                 link = "https://raw.gitmirror.com/thewakingsands/ffxiv-datamining-cn/master/" + fileName;
             }
@@ -464,7 +382,7 @@ namespace FFXIVIMDicGenerator
 
             if (onlineContents.Count > 0)
             {
-                onlineItemFileLinks = onlineContents;
+                _onlineItemFileLinks = onlineContents;
             }
         }
 
@@ -495,7 +413,7 @@ namespace FFXIVIMDicGenerator
                         File.WriteAllLines(filePath, replacedLines);
                     }
 
-                    CNMirrorReplace = true;
+                    _cnMirrorReplace = true;
 
                     MessageBox.Show("域名替换完成并写入文件成功！");
                 }
@@ -546,11 +464,11 @@ namespace FFXIVIMDicGenerator
 
                     if (domainCount.Values.Max() > rawGithubCount)
                     {
-                        CNMirrorReplace = true;
+                        _cnMirrorReplace = true;
                     }
                     else
                     {
-                        CNMirrorReplace = false;
+                        _cnMirrorReplace = false;
                     }
                 }
             }
@@ -613,7 +531,7 @@ namespace FFXIVIMDicGenerator
                 {
                     bool skipFile = false;
 
-                    foreach (var keyword in keywords)
+                    foreach (var keyword in _keywords)
                     {
                         int columnIndex = FindColumnIndex(rows[1], keyword);
 

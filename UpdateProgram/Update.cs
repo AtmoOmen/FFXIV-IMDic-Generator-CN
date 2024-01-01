@@ -1,149 +1,127 @@
 using System.Diagnostics;
-using System.IO.Compression;
 using Newtonsoft.Json.Linq;
 using System.IO.Pipes;
+using static System.String;
 
-#pragma warning disable CS8600, CS8602, CS8604
 namespace UpdateProgram
 {
     public partial class Update : Form
     {
-        private static readonly string MutexName = "FFXIVIMDICGENERATORUpdateMutex";
+        private const string MutexName = "FFXIVIMDICGENERATORUpdateMutex";
+        private static readonly HttpClient HttpClient = new();
 
         public Update()
+        {
+            InitializeForm();
+            RunSingleInstance();
+        }
+
+        private void InitializeForm()
         {
             this.Hide();
             this.ShowInTaskbar = false;
             this.WindowState = FormWindowState.Minimized;
+        }
 
-            bool isNewInstance;
-            Mutex mutex = new Mutex(true, MutexName, out isNewInstance);
-
+        private void RunSingleInstance()
+        {
+            using var mutex = new Mutex(true, MutexName, out var isNewInstance);
             if (!isNewInstance)
             {
-                // 如果程序已经在运行，则退出
                 MessageBox.Show("程序已经在运行中。");
                 Application.Exit();
+                return;
             }
-            else
-            {
-                // 异步调用AutoUpdate方法
-                Task.Run(() => AutoUpdate());
-            }
+            Task.Run(AutoUpdate);
         }
 
         public async Task AutoUpdate()
         {
             try
             {
-                string localVersion;
-
-                using (NamedPipeClientStream pipeClient = new NamedPipeClientStream(".", "FFXIVIMDICGENERATORLocalVersionPipe", PipeDirection.In))
+                var localVersion = await ReadLocalVersionAsync();
+                var response = await SendGitHubApiRequest().ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
                 {
-                    pipeClient.Connect();
-
-                    using (StreamReader reader = new StreamReader(pipeClient))
-                    {
-                        localVersion = reader.ReadLine();
-                    }
+                    MessageBox.Show($"无法获取更新信息，HTTP响应状态码：{response.StatusCode}");
+                    return;
                 }
 
-                string apiUrl = "https://api.github.com/repos/AtmoOmen/FFXIV-IMDic-Generator-CN/releases/latest";
-
-                using (HttpClient client = new HttpClient())
-                {
-                    client.BaseAddress = new Uri(apiUrl);
-                    client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("AppName", "1.0"));
-                    client.Timeout = TimeSpan.FromSeconds(60);
-
-                    HttpResponseMessage response = await client.GetAsync(apiUrl);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        JObject releaseInfo = JObject.Parse(responseBody);
-                        string remoteVersion = releaseInfo["tag_name"]?.ToString();
-                        JArray assets = (JArray)releaseInfo["assets"];
-                        string downloadUrl = assets[0]["browser_download_url"]?.ToString();
-                        string releaseNotes = releaseInfo["body"]?.ToString();
-
-                        if (!string.IsNullOrEmpty(remoteVersion) && string.Compare(remoteVersion, localVersion) > 0)
-                        {
-                            string message = $"发现新版本：{remoteVersion}\n\n更新内容：\n{releaseNotes}";
-                            DialogResult result = MessageBox.Show(message, "新版本可用", MessageBoxButtons.OKCancel);
-
-                            if (result == DialogResult.OK)
-                            {
-                                CloseOriginalProgram();
-                                using (HttpClient downloadClient = new HttpClient())
-                                {
-                                    byte[] zipData = await downloadClient.GetByteArrayAsync(downloadUrl);
-                                    string tempZipPath = Path.Combine(Path.GetTempPath(), "update.zip");
-
-                                    File.WriteAllBytes(tempZipPath, zipData);
-
-                                    string targetFolder = Path.GetDirectoryName(Application.ExecutablePath);
-                                    ZipFile.ExtractToDirectory(tempZipPath, targetFolder, true);
-                                    File.Delete(tempZipPath);
-
-                                    RestartOriginalProgram();
-                                }
-                            }
-                            else
-                            {
-                                Application.Exit();
-                            }
-                        }
-                        else
-                        {
-                            Application.Exit();
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("无法获取更新信息，HTTP响应状态码：" + response.StatusCode.ToString());
-                    }
-                }
+                var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                await ProcessUpdateInfoAsync(responseBody, localVersion).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("发生异常：" + ex.Message);
+                MessageBox.Show($"发生异常：{ex.Message}");
             }
         }
 
-        static void CloseOriginalProgram()
+        private static async Task<HttpResponseMessage> SendGitHubApiRequest()
         {
-            try
-            {
-                string originalProgramName = "FFXIVIMDicGenerator.exe";
-
-                Process[] processes = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(originalProgramName));
-                foreach (Process process in processes)
-                {
-                    process.CloseMainWindow();
-                    if (!process.WaitForExit(5000))
-                    {
-                        process.Kill();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("关闭原程序时发生异常：" + ex.Message);
-            }
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/AtmoOmen/FFXIV-IMDic-Generator-CN/releases/latest");
+            request.Headers.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("FFXIVIMDicGenerator", "1.6"));
+            return await HttpClient.SendAsync(request);
         }
 
-        static void RestartOriginalProgram()
+
+        private static async Task<string?> ReadLocalVersionAsync()
         {
-            try
+            var pipeClient = new NamedPipeClientStream(".", "FFXIVIMDICGENERATORLocalVersionPipe", PipeDirection.In);
+            await using var _ = pipeClient.ConfigureAwait(false);
+            await pipeClient.ConnectAsync();
+            using var reader = new StreamReader(pipeClient);
+            return await reader.ReadLineAsync().ConfigureAwait(false);
+        }
+
+        private static async Task ProcessUpdateInfoAsync(string responseBody, string? localVersion)
+        {
+            var releaseInfo = JObject.Parse(responseBody);
+            var remoteVersion = releaseInfo["tag_name"]?.ToString();
+            if (Compare(remoteVersion, localVersion) <= 0)
             {
-                string originalProgramPath = Path.Combine(Application.StartupPath, "FFXIVIMDicGenerator.exe");
-                Process.Start(originalProgramPath);
                 Application.Exit();
+                return;
             }
-            catch (Exception ex)
+
+            var message = $"发现新版本：{remoteVersion}\n\n更新内容：\n{releaseInfo["body"]}";
+            if (MessageBox.Show(message, "新版本可用", MessageBoxButtons.OKCancel) != DialogResult.OK)
             {
-                MessageBox.Show("重新启动原程序时发生异常：" + ex.Message);
+                Application.Exit();
+                return;
+            }
+
+            await DownloadAndUpdateAsync(releaseInfo["assets"][0]["browser_download_url"]?.ToString()).ConfigureAwait(false);
+        }
+
+        private static async Task DownloadAndUpdateAsync(string downloadUrl)
+        {
+            var zipData = await HttpClient.GetByteArrayAsync(downloadUrl).ConfigureAwait(false);
+            var tempZipPath = Path.Combine(Path.GetTempPath(), "update.zip");
+            File.WriteAllBytes(tempZipPath, zipData);
+
+            var batFilePath = Path.Combine(Path.GetTempPath(), "update.bat");
+            using (var batFile = new StreamWriter(batFilePath))
+            {
+                batFile.WriteLine("@echo off");
+                batFile.WriteLine("timeout /t 5 /nobreak");
+                batFile.WriteLine($"del \"{Path.Combine(Application.StartupPath, "FFXIVIMDicGenerator.exe")}\"");
+                batFile.WriteLine($"expand \"{tempZipPath}\" -F:* \"{Path.GetDirectoryName(Application.ExecutablePath)}\"");
+                batFile.WriteLine($"del \"{tempZipPath}\"");
+                batFile.WriteLine($"start \"\" \"{Path.Combine(Application.StartupPath, "FFXIVIMDicGenerator.exe")}\"");
+                batFile.WriteLine($"del \"%~f0\"");
+            }
+
+            CloseOriginalProgram();
+            Process.Start(batFilePath);
+            Application.Exit();
+        }
+
+        private static void CloseOriginalProgram()
+        {
+            foreach (var process in Process.GetProcessesByName("FFXIVIMDicGenerator"))
+            {
+                process.CloseMainWindow();
+                if (!process.WaitForExit(5000)) process.Kill();
             }
         }
     }

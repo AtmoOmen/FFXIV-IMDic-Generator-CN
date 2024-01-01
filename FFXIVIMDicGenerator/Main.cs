@@ -3,15 +3,13 @@ using System.Text.RegularExpressions;
 
 namespace FFXIVIMDicGenerator
 {
-#pragma warning disable CS8600, CS8602, CS8603, CS8604, CS8622, CS4014
-
     public partial class Main : Form
     {
         public Main()
         {
             InitializeComponent();
 
-            Text += localVersion;
+            Text += LocalVersion;
 
             InitializeCheckedBox();
 
@@ -25,14 +23,14 @@ namespace FFXIVIMDicGenerator
         {
             using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
             {
-                disableAllbtns();
+                DisableAllbtns();
                 if (folderDialog.ShowDialog() == DialogResult.OK)
                 {
                     txtFolderPath.Text = folderDialog.SelectedPath;
                     var csvFileCount = Directory.EnumerateFiles(folderDialog.SelectedPath, "*.csv", SearchOption.AllDirectories).Count();
                     localFileCountLabel.Text = $"当前文件数: {csvFileCount}";
                 }
-                enableAllbtns();
+                EnableAllbtns();
             }
         }
 
@@ -47,8 +45,8 @@ namespace FFXIVIMDicGenerator
                 return;
             }
 
-            var Format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
-            if (string.IsNullOrEmpty(Format) || Format == "未知")
+            var format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
+            if (string.IsNullOrEmpty(format) || format == "未知")
             {
                 MessageBox.Show("请选择有效的格式转换类型");
                 return;
@@ -63,26 +61,26 @@ namespace FFXIVIMDicGenerator
                 return;
             }
 
-            disableAllbtns();
+            DisableAllbtns();
 
             var tasks = csvFiles.Select(csvFile => ProcessCsvFile(csvFile, allData)).ToArray();
             await Task.WhenAll(tasks);
 
             try
             {
-                File.WriteAllLines(outputFilePath, allData, Encoding.UTF8);
-                var removedData = RemoveDuplicates(outputFilePath);
-                OpenConvertCmd(Format);
+                File.WriteAllLines(_outputFilePath, allData, Encoding.UTF8);
+                var removedData = RemoveDuplicates(_outputFilePath);
+                OpenConvertCmd(format);
                 MessageBox.Show($"处理完成，共 {allData.Count - removedData} 条\n" +
-                    $"输出文件位于: {outputFilePath}");
-                enableAllbtns();
+                    $"输出文件位于: {_outputFilePath}");
+                EnableAllbtns();
                 handleGroup.Text = "生成";
                 OpenFolder(Environment.CurrentDirectory);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"保存文件时发生错误: {ex.Message}");
-                enableAllbtns();
+                EnableAllbtns();
                 handleGroup.Text = "生成";
             }
         }
@@ -90,25 +88,25 @@ namespace FFXIVIMDicGenerator
         // 在线文件生成功能
         private async void btnBrowseOnlineFiles_Click(object sender, EventArgs e)
         {
-            disableAllbtns();
+            DisableAllbtns();
             List<string> allData = new List<string>();
 
-            var Format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
-            if (string.IsNullOrEmpty(Format) || Format == "未知")
+            var format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
+            if (string.IsNullOrEmpty(format) || format == "未知")
             {
                 MessageBox.Show("请选择有效的格式转换类型");
                 return;
             }
 
-            onlineLinksFromFile = onlineLinksFromFile.Where(link => !string.IsNullOrEmpty(link)).ToList();
+            _onlineLinksFromFile = _onlineLinksFromFile.Where(link => !string.IsNullOrEmpty(link)).ToList();
 
-            int totalFiles = onlineLinksFromFile.Count;
+            int totalFiles = _onlineLinksFromFile.Count;
             int processedFiles = 0;
 
             progressBar.Maximum = totalFiles;
             progressBar.Value = 0;
 
-            await Task.WhenAll(onlineLinksFromFile.Select(async link =>
+            await Task.WhenAll(_onlineLinksFromFile.Select(async link =>
             {
                 await ProcessCsvFile(link, allData);
 
@@ -118,19 +116,19 @@ namespace FFXIVIMDicGenerator
 
             try
             {
-                File.WriteAllLines(outputFilePath, allData, Encoding.UTF8);
-                var removedData = RemoveDuplicates(outputFilePath);
-                OpenConvertCmd(Format);
+                File.WriteAllLines(_outputFilePath, allData, Encoding.UTF8);
+                var removedData = RemoveDuplicates(_outputFilePath);
+                OpenConvertCmd(format);
                 MessageBox.Show($"处理完成，共 {allData.Count - removedData} 条\n" +
-                    $"输出文件位于: {outputFilePath}");
-                enableAllbtns();
+                    $"输出文件位于: {_outputFilePath}");
+                EnableAllbtns();
                 handleGroup.Text = "生成";
                 OpenFolder(Environment.CurrentDirectory);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"保存文件时发生错误: {ex.Message}");
-                enableAllbtns();
+                EnableAllbtns();
                 handleGroup.Text = "生成";
             }
         }
@@ -170,7 +168,7 @@ namespace FFXIVIMDicGenerator
             onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
 
             string fileContent = File.ReadAllText(LinksFilePath);
-            LinksName = GetFileNamesFromLinksFile(LinksFilePath);
+            _linksName = GetFileNamesFromLinksFile(LinksFilePath);
             string[] lines = File.ReadAllLines(LinksFilePath);
 
             string pattern = @"(http://|https://)\S+";
@@ -181,8 +179,8 @@ namespace FFXIVIMDicGenerator
             onlineLinkstextbox.Text = "./Links.txt";
 
             // 具体内容重置
-            onlineLinksFromFile.Clear();
-            onlineLinksFromFile.AddRange(lines);
+            _onlineLinksFromFile.Clear();
+            _onlineLinksFromFile.AddRange(lines);
 
             // 重置列表框
             if (param == -1)
@@ -192,9 +190,9 @@ namespace FFXIVIMDicGenerator
                     onlineFileList.SetItemChecked(i, false);
                 }
 
-                foreach (var kvp in LinksName)
+                foreach (var kvp in _linksName)
                 {
-                    List<string> keys = fileTypeNames.Keys.ToList();
+                    List<string> keys = _fileTypeNames.Keys.ToList();
 
                     var index = keys.IndexOf(kvp);
 
@@ -222,7 +220,7 @@ namespace FFXIVIMDicGenerator
             bool isChecked = (e.NewValue == CheckState.Checked);
             if (isChecked)
             {
-                bool isAdded = AddLinkToFileIfNotExists(fileTypeNames.FirstOrDefault(x => x.Value == selectedItem).Key);
+                bool isAdded = AddLinkToFileIfNotExists(_fileTypeNames.FirstOrDefault(x => x.Value == selectedItem).Key);
                 if (!isAdded)
                 {
                     MessageBox.Show("添加失败");
@@ -230,7 +228,7 @@ namespace FFXIVIMDicGenerator
             }
             else
             {
-                bool isRemoved = RemoveLinkFromFileIfExists(fileTypeNames.FirstOrDefault(x => x.Value == selectedItem).Key);
+                bool isRemoved = RemoveLinkFromFileIfExists(_fileTypeNames.FirstOrDefault(x => x.Value == selectedItem).Key);
                 if (!isRemoved)
                 {
                     MessageBox.Show("删除失败");
@@ -247,7 +245,7 @@ namespace FFXIVIMDicGenerator
 
             try
             {
-                File.WriteAllLines(LinksFilePath, onlineItemFileLinks);
+                File.WriteAllLines(LinksFilePath, _onlineItemFileLinks);
                 MessageBox.Show("重置成功");
             }
             catch (Exception ex)
@@ -277,7 +275,7 @@ namespace FFXIVIMDicGenerator
         }
 
         // 禁用/启用 所有按钮 (防止误操作)
-        private void disableAllbtns()
+        private void DisableAllbtns()
         {
             btnConvert.Enabled = false;
             btnBrowseFolder.Enabled = false;
@@ -286,7 +284,7 @@ namespace FFXIVIMDicGenerator
             onlineFileLinkEdit.Enabled = false;
         }
 
-        private void enableAllbtns()
+        private void EnableAllbtns()
         {
             btnConvert.Enabled = true;
             btnBrowseFolder.Enabled = true;
