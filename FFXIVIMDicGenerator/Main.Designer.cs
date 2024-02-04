@@ -201,7 +201,7 @@
             onlineLinkCountLabel.Size = new Size(104, 24);
             onlineLinkCountLabel.TabIndex = 8;
             onlineLinkCountLabel.Text = "当前链接数:";
-            onlineLinkCountLabel.Click += onlineLinkCountLabel_Click;
+            onlineLinkCountLabel.Click += OnlineLinkCountLabel_Click;
             // 
             // onlineFileLinkEdit
             // 
@@ -211,7 +211,7 @@
             onlineFileLinkEdit.TabIndex = 7;
             onlineFileLinkEdit.Text = "编辑";
             onlineFileLinkEdit.UseVisualStyleBackColor = true;
-            onlineFileLinkEdit.Click += onlineFileLinkEdit_Click;
+            onlineFileLinkEdit.Click += OnlineFileLinkEdit_Click;
             // 
             // onlineLinkstextbox
             // 
@@ -346,7 +346,7 @@
             gitHubToolStripMenuItem.Name = "gitHubToolStripMenuItem";
             gitHubToolStripMenuItem.Size = new Size(88, 28);
             gitHubToolStripMenuItem.Text = "GitHub";
-            gitHubToolStripMenuItem.Click += gitHubToolStripMenuItem_Click;
+            gitHubToolStripMenuItem.Click += GitHubToolStripMenuItem_Click;
             // 
             // Main
             // 

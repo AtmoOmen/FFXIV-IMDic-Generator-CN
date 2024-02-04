@@ -1,8 +1,8 @@
 ﻿namespace FFXIVIMDicGenerator;
 
-public partial class Main : Form
+public partial class Main
 {
-    private const string LocalVersion = "1.0.6.0";
+    private const string LocalVersion = "1.0.7.0";
 
     private static readonly HttpClient HttpClient = new(new HttpClientHandler { MaxConnectionsPerServer = 32 });
 
@@ -10,7 +10,7 @@ public partial class Main : Form
 
     private readonly string _outputFilePath = Path.Combine(Environment.CurrentDirectory, "output.txt");
 
-    private bool _cnMirrorReplace = false;
+    private bool _cnMirrorReplace;
 
     private List<string> _onlineItemFileLinks = new()
     {
@@ -60,10 +60,10 @@ public partial class Main : Form
         "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ItemUICategory.csv",
         "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Mount.csv",
         "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/RacingChocoboParam.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Stain.csv",
+        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Stain.csv"
     };
 
-    private List<string> _onlineLinksFromFile = new();
+    private readonly List<string> _onlineLinksFromFile = new();
 
     private List<string> _linksName = new();
 
@@ -293,6 +293,6 @@ public partial class Main : Form
         { "Warp.csv", "副本外场景传送点" },
         { "AnimaWeapon5Param.csv", "魂武属性" },
         { "AnimaWeapon5PatternGroup.csv", "水晶砂交换品" },
-        { "AquariumWater.csv", "水族箱环境" },
+        { "AquariumWater.csv", "水族箱环境" }
     };
 }
