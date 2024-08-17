@@ -361,7 +361,6 @@
             MainMenuStrip = menuStrip1;
             Name = "Main";
             Text = "FF14 输入法自定义词库生成器 ";
-            Load += Main_Load;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
             dataSourceGroup.ResumeLayout(false);

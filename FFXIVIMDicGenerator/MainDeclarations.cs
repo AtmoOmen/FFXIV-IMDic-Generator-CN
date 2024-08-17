@@ -6,13 +6,13 @@ public partial class Main
 
     private static readonly HttpClient HttpClient = new(new HttpClientHandler { MaxConnectionsPerServer = 32 });
 
-    internal string LinksFilePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
+    private static readonly string LinksFilePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
 
-    private readonly string _outputFilePath = Path.Combine(Environment.CurrentDirectory, "output.txt");
+    private static readonly string _outputFilePath = Path.Combine(Environment.CurrentDirectory, "output.txt");
 
-    private bool _cnMirrorReplace;
+    private static bool _cnMirrorReplace;
 
-    private List<string> _onlineItemFileLinks = new()
+    private static List<string> _onlineItemFileLinks = new()
     {
         "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Action.csv",
         "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BaseParam.csv",
@@ -63,11 +63,11 @@ public partial class Main
         "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Stain.csv"
     };
 
-    private readonly List<string> _onlineLinksFromFile = new();
+    private static readonly List<string> _onlineLinksFromFile = new();
 
-    private List<string> _linksName = new();
+    private static List<string> _linksName = new();
 
-    private readonly Dictionary<string, string> _desTypes = new()
+    private static readonly Dictionary<string, string> _desTypes = new()
     {
         { "搜狗拼音txt (搜狗旧版)", "sgpy" },
         { "搜狗细胞词库scel", "scel" },
