@@ -1,128 +1,11 @@
-﻿namespace FFXIVIMDicGenerator;
+namespace FFXIVIMDicGenerator.Configuration;
 
-public partial class Main
+/// <summary>
+/// FFXIV数据源配置
+/// </summary>
+public static class FfxivDataSources
 {
-    private const string LocalVersion = "1.0.7.0";
-
-    private static readonly HttpClient HttpClient = new(new HttpClientHandler { MaxConnectionsPerServer = 32 });
-
-    internal string LinksFilePath = Path.Combine(Environment.CurrentDirectory, "Links.txt");
-
-    private readonly string _outputFilePath = Path.Combine(Environment.CurrentDirectory, "output.txt");
-
-    private bool _cnMirrorReplace;
-
-    private List<string> _onlineItemFileLinks = new()
-    {
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Action.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BaseParam.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BuddyEquip.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ChocoboRaceAbility.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ChocoboRaceItem.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ClassJob.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Companion.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/CompanyAction.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/CompanyCraftDraft.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ContentsTutorial.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/CraftAction.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/PlaceName.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/AOZScore.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BeastTribe.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Quest.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DeepDungeonItem.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DeepDungeonMagicStone.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DynamicEvent.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/DynamicEventEnemyType.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Emote.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GrandCompany.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/HousingPreset.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Pet.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/PetAction.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/PetMirage.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/World.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Title.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/TripleTriadCard.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/TripleTriadCardType.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Weather.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Achievement.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ContentFinderCondition.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GCRankGridaniaMaleText.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GCRankGridaniaFemaleText.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GCRankUldahMaleText.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GCRankUldahFemaleText.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GCRankLimsaMaleText.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GCRankLimsaFemaleText.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GeneralAction.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GuardianDeity.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ItemSearchCategory.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ItemSeries.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ItemUICategory.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Mount.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/RacingChocoboParam.csv",
-        "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Stain.csv"
-    };
-
-    private readonly List<string> _onlineLinksFromFile = new();
-
-    private List<string> _linksName = new();
-
-    private readonly Dictionary<string, string> _desTypes = new()
-    {
-        { "搜狗拼音txt (搜狗旧版)", "sgpy" },
-        { "搜狗细胞词库scel", "scel" },
-        { "搜狗拼音备份词库bin", "sgpybin" },
-        { "QQ拼音", "qqpy" },
-        { "QQ分类词库qpyd", "qpyd" },
-        { "QQ分类词库qcel", "qcel" },
-        { "QQ五笔", "qqwb" },
-        { "QQ拼音英文", "qqpye" },
-        { "百度拼音", "bdpy" },
-        { "小小输入法", "xiaoxiao" },
-        { "百度分类词库bdict", "bdict" },
-        { "谷歌拼音", "ggpy" },
-        { "Gboard", "gboard" },
-        { "拼音加加", "pyjj" },
-        { "Win10微软拼音 (自定义短语)", "win10mspy" },
-        { "Win10微软五笔 (自定义短语)", "win10mswb" },
-        { "Win10微软拼音 (自学习词库)", "win10mspyss" },
-        { "微软拼音", "mspy" },
-        { "必应输入法", "bing" },
-        { "FIT输入法", "fit" },
-        { "Rime中州韵", "rime" },
-        { "Mac简体拼音", "plist" },
-        { "华宇紫光拼音", "zgpy" },
-        { "紫光拼音词库uwl", "uwl" },
-        { "libpinyin", "libpy" },
-        { "Chinese-pyim", "pyim" },
-        { "手心输入法", "sxpy" },
-        { "新浪拼音", "xlpy" },
-        { "极点五笔", "jd" },
-        { "极点郑码", "jdzm" },
-        { "极点五笔.mb文件", "jdmb" },
-        { "小鸭五笔", "xywb" },
-        { "雅虎奇摩", "yahoo" },
-        { "灵格斯ld2", "ld2" },
-        { "五笔86版", "wb86" },
-        { "五笔98版", "wb98" },
-        { "五笔新世纪版", "wbnewage" },
-        { "仓颉平台", "cjpt" },
-        { "Emoji", "emoji" },
-        { "百度手机或Mac版百度拼音", "bdsj" },
-        { "百度手机英文", "bdsje" },
-        { "百度手机词库bcd", "bcd" },
-        { "QQ手机", "qqsj" },
-        { "讯飞输入法", "ifly" },
-        { "自定义", "self" },
-        { "无拼音纯汉字 (搜狗新版)", "word" }
-    };
-
-    private readonly List<string> _keywords = new()
-    {
-        "Name", "Singular"
-    };
-
-    private readonly Dictionary<string, string> _fileTypeNames = new()
+    public static readonly Dictionary<string, string> FileTypeNames = new()
     {
         { "Seperator1", "———推荐———" },
         { "ClassJob.csv", "职业名" },
@@ -295,4 +178,23 @@ public partial class Main
         { "AnimaWeapon5PatternGroup.csv", "水晶砂交换品" },
         { "AquariumWater.csv", "水族箱环境" }
     };
-}
+
+    public static readonly Dictionary<string, string> OnlineLinks = new()
+    {
+        { "ClassJob.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ClassJob.csv" },
+        { "Action.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Action.csv" },
+        { "CraftAction.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/CraftAction.csv" },
+        { "GeneralAction.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/GeneralAction.csv" },
+        { "BaseParam.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/BaseParam.csv" },
+        { "Item.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv" },
+        { "PlaceName.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/PlaceName.csv" },
+        { "Quest.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Quest.csv" },
+        { "Mount.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Mount.csv" },
+        { "Pet.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Pet.csv" },
+        { "ENpcResident.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ENpcResident.csv" },
+        { "World.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/World.csv" },
+        { "Title.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Title.csv" },
+        { "Achievement.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Achievement.csv" },
+        { "ContentFinderCondition.csv", "https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/ContentFinderCondition.csv" }
+    };
+} 
