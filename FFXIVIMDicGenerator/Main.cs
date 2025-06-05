@@ -16,7 +16,7 @@ public partial class Main : Form
         AnalyzeDomains();
     }
 
-    // ä¯ÀÀ±¾µØÎÄ¼ş¼Ğ
+    // æµè§ˆæœ¬åœ°æ–‡ä»¶å¤¹
     private void btnBrowseFolder_Click(object sender, EventArgs e)
     {
         using var folderDialog = new FolderBrowserDialog();
@@ -26,25 +26,25 @@ public partial class Main : Form
             txtFolderPath.Text = folderDialog.SelectedPath;
             var csvFileCount = Directory
                 .EnumerateFiles(folderDialog.SelectedPath, "*.csv", SearchOption.AllDirectories).Count();
-            localFileCountLabel.Text = $"µ±Ç°ÎÄ¼şÊı: {csvFileCount}";
+            localFileCountLabel.Text = $"å½“å‰æ–‡ä»¶æ•°: {csvFileCount}";
         }
 
         EnableAllbtns();
     }
 
-    // ±¾µØ×ª»»¹¦ÄÜ
+    // æœ¬åœ°è½¬æ¢åŠŸèƒ½
     private async void btnConvert_Click(object sender, EventArgs e)
     {
         if (!IsValidFolderPath(txtFolderPath.Text))
         {
-            MessageBox.Show("ÇëÑ¡ÔñÓĞĞ§µÄÎÄ¼ş¼Ğ");
+            MessageBox.Show("è¯·é€‰æ‹©æœ‰æ•ˆçš„æ–‡ä»¶å¤¹");
             return;
         }
 
         var format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
-        if (string.IsNullOrEmpty(format) || format == "Î´Öª")
+        if (string.IsNullOrEmpty(format) || format == "æœªçŸ¥")
         {
-            MessageBox.Show("ÇëÑ¡ÔñÓĞĞ§µÄ¸ñÊ½×ª»»ÀàĞÍ");
+            MessageBox.Show("è¯·é€‰æ‹©æœ‰æ•ˆçš„æ ¼å¼è½¬æ¢ç±»å‹");
             return;
         }
 
@@ -52,16 +52,16 @@ public partial class Main : Form
         {
             DisableAllbtns();
             await ProcessFolder(txtFolderPath.Text, format);
-            MessageBox.Show("´¦ÀíÍê³É£¡");
+            MessageBox.Show("å¤„ç†å®Œæˆï¼");
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"´¦ÀíÊ±·¢Éú´íÎó: {ex.Message}");
+            MessageBox.Show($"å¤„ç†æ—¶å‘ç”Ÿé”™è¯¯: {ex.Message}");
         }
         finally
         {
             EnableAllbtns();
-            handleGroup.Text = "Éú³É";
+            handleGroup.Text = "ç”Ÿæˆ";
         }
     }
 
@@ -75,7 +75,7 @@ public partial class Main : Form
         var allData = new List<string>();
         var csvFiles = Directory.GetFiles(folderPath, "*.csv");
 
-        if (csvFiles.Length == 0) throw new InvalidOperationException("ÎÄ¼ş¼ĞÖĞÃ»ÓĞÕÒµ½ÈÎºÎ CSV ÎÄ¼ş");
+        if (csvFiles.Length == 0) throw new InvalidOperationException("æ–‡ä»¶å¤¹ä¸­æ²¡æœ‰æ‰¾åˆ°ä»»ä½• CSV æ–‡ä»¶");
 
         var tasks = csvFiles.Select(csvFile => ProcessCsvFile(csvFile, allData)).ToArray();
         await Task.WhenAll(tasks);
@@ -86,12 +86,12 @@ public partial class Main : Form
     }
 
 
-    // ÔÚÏßÎÄ¼şÉú³É¹¦ÄÜ
+    // åœ¨çº¿æ–‡ä»¶ç”ŸæˆåŠŸèƒ½
     private async void btnBrowseOnlineFiles_Click(object sender, EventArgs e)
     {
         if (!IsValidFormatSelected())
         {
-            MessageBox.Show("ÇëÑ¡ÔñÓĞĞ§µÄ¸ñÊ½×ª»»ÀàĞÍ");
+            MessageBox.Show("è¯·é€‰æ‹©æœ‰æ•ˆçš„æ ¼å¼è½¬æ¢ç±»å‹");
             return;
         }
 
@@ -105,16 +105,16 @@ public partial class Main : Form
 
             await File.WriteAllLinesAsync(_outputFilePath, allData, Encoding.UTF8);
             OpenConvertCmd(GetDesConvertType(desFormatCombo.SelectedItem.ToString()));
-            MessageBox.Show($"´¦ÀíÍê³É£¬¹² {allData.Count} Ìõ\nÊä³öÎÄ¼şÎ»ÓÚ: {_outputFilePath}");
+            MessageBox.Show($"å¤„ç†å®Œæˆï¼Œå…± {allData.Count} æ¡\nè¾“å‡ºæ–‡ä»¶ä½äº: {_outputFilePath}");
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"´¦ÀíÊ±·¢Éú´íÎó: {ex.Message}");
+            MessageBox.Show($"å¤„ç†æ—¶å‘ç”Ÿé”™è¯¯: {ex.Message}");
         }
         finally
         {
             EnableAllbtns();
-            handleGroup.Text = "Éú³É";
+            handleGroup.Text = "ç”Ÿæˆ";
             OpenFolder(Environment.CurrentDirectory);
         }
     }
@@ -122,7 +122,7 @@ public partial class Main : Form
     private bool IsValidFormatSelected()
     {
         var format = GetDesConvertType(desFormatCombo.SelectedItem.ToString());
-        return !string.IsNullOrEmpty(format) && format != "Î´Öª";
+        return !string.IsNullOrEmpty(format) && format != "æœªçŸ¥";
     }
 
     private async Task<List<string>> ProcessOnlineFiles()
@@ -141,36 +141,36 @@ public partial class Main : Form
     }
 
 
-    // Ö÷½çÃæ³õÊ¼»¯
+    // ä¸»ç•Œé¢åˆå§‹åŒ–
     private void Main_Load(object sender, EventArgs e)
     {
     }
 
-    // ²Ëµ¥À¸£ºÏà¹Ø¹¤¾ß/×ÊÁÏ ¡ª¡ª¿ªÊ¼¡ª¡ª
+    // èœå•æ ï¼šç›¸å…³å·¥å…·/èµ„æ–™ â€”â€”å¼€å§‹â€”â€”
     private void ffxivdataminingcnToolStripMenuItem1_Click(object sender, EventArgs e)
     {
         OpenUrl("https://github.com/thewakingsands/ffxiv-datamining-cn");
     }
 
-    private void ÉîÀ¶´Ê¿â×ª»»ToolStripMenuItem1_Click(object sender, EventArgs e)
+    private void æ·±è“è¯åº“è½¬æ¢ToolStripMenuItem1_Click(object sender, EventArgs e)
     {
         OpenUrl("https://github.com/studyzy/imewlconverter");
     }
 
-    private void csvÎÄ¼şÄÚÈİ²Î¿¼ToolStripMenuItem_Click(object sender, EventArgs e)
+    private void csvæ–‡ä»¶å†…å®¹å‚è€ƒToolStripMenuItem_Click(object sender, EventArgs e)
     {
         OpenUrl("https://github.com/Souma-Sumire/FFXIVChnTextPatch-Souma/wiki/CSV%E6%96%87%E4%BB%B6");
     }
 
-    // ²Ëµ¥À¸£ºÏà¹Ø¹¤¾ß/×ÊÁÏ ¡ª¡ª½áÊø¡ª¡ª
+    // èœå•æ ï¼šç›¸å…³å·¥å…·/èµ„æ–™ â€”â€”ç»“æŸâ€”â€”
 
-    // ÔÚÏßÎÄ¼şÉú³É-±à¼­ Links.txt ¹¦ÄÜ
+    // åœ¨çº¿æ–‡ä»¶ç”Ÿæˆ-ç¼–è¾‘ Links.txt åŠŸèƒ½
     private void OnlineFileLinkEdit_Click(object sender, EventArgs e)
     {
         OpenFile(Path.Combine(Environment.CurrentDirectory, "Links.txt"));
     }
 
-    // Ë¢ĞÂ¸÷ÖÖÓëÔÚÏßÎÄ¼şÉú³É¹¦ÄÜÏà¹ØµÄ×é¼ş
+    // åˆ·æ–°å„ç§ä¸åœ¨çº¿æ–‡ä»¶ç”ŸæˆåŠŸèƒ½ç›¸å…³çš„ç»„ä»¶
     private void RefreshOnlineRelatedComponents(int param = -1)
     {
         onlineFileList.ItemCheck -= onlineFileList_ItemCheck;
@@ -182,15 +182,15 @@ public partial class Main : Form
         const string pattern = @"(http://|https://)\S+";
         var matches = Regex.Matches(fileContent, pattern);
 
-        // Á´½ÓÊı±êÇ©ÖØÖÃ
-        onlineLinkCountLabel.Text = $"µ±Ç°Á´½ÓÊı: {matches.Count}";
+        // é“¾æ¥æ•°æ ‡ç­¾é‡ç½®
+        onlineLinkCountLabel.Text = $"å½“å‰é“¾æ¥æ•°: {matches.Count}";
         onlineLinkstextbox.Text = "./Links.txt";
 
-        // ¾ßÌåÄÚÈİÖØÖÃ
+        // å…·ä½“å†…å®¹é‡ç½®
         _onlineLinksFromFile.Clear();
         _onlineLinksFromFile.AddRange(lines);
 
-        // ÖØÖÃÁĞ±í¿ò
+        // é‡ç½®åˆ—è¡¨æ¡†
         if (param == -1)
         {
             for (var i = 0; i < onlineFileList.Items.Count; i++) onlineFileList.SetItemChecked(i, false);
@@ -204,13 +204,13 @@ public partial class Main : Form
         onlineFileList.ItemCheck += onlineFileList_ItemCheck;
     }
 
-    // ÁĞ±í¿òÄÚÑ¡Ïî×´Ì¬¸ü¸Ä
+    // åˆ—è¡¨æ¡†å†…é€‰é¡¹çŠ¶æ€æ›´æ”¹
     private void onlineFileList_ItemCheck(object sender, ItemCheckEventArgs e)
     {
         var selectedItem = onlineFileList.Items[e.Index].ToString();
         var itemText = onlineFileList.Items[e.Index].ToString();
 
-        if (itemText.StartsWith("¡ª¡ª"))
+        if (itemText.StartsWith("â€”â€”"))
         {
             e.NewValue = e.CurrentValue;
             return;
@@ -220,18 +220,18 @@ public partial class Main : Form
         if (isChecked)
         {
             var isAdded = AddLinkToFileIfNotExists(_fileTypeNames.FirstOrDefault(x => x.Value == selectedItem).Key);
-            if (!isAdded) MessageBox.Show("Ìí¼ÓÊ§°Ü");
+            if (!isAdded) MessageBox.Show("æ·»åŠ å¤±è´¥");
         }
         else
         {
             var isRemoved = RemoveLinkFromFileIfExists(_fileTypeNames.FirstOrDefault(x => x.Value == selectedItem).Key);
-            if (!isRemoved) MessageBox.Show("É¾³ıÊ§°Ü");
+            if (!isRemoved) MessageBox.Show("åˆ é™¤å¤±è´¥");
         }
 
         RefreshOnlineRelatedComponents(0);
     }
 
-    // ÖØÖÃÔÚÏßÎÄ¼şÁ´½ÓÎÄ¼ş
+    // é‡ç½®åœ¨çº¿æ–‡ä»¶é“¾æ¥æ–‡ä»¶
     private void btnReloadOnline_Click(object sender, EventArgs e)
     {
         GetDefaultLinksList();
@@ -239,35 +239,35 @@ public partial class Main : Form
         try
         {
             File.WriteAllLines(LinksFilePath, _onlineItemFileLinks);
-            MessageBox.Show("ÖØÖÃ³É¹¦");
+            MessageBox.Show("é‡ç½®æˆåŠŸ");
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"ÖØÖÃÊ±·¢Éú´íÎó: {ex.Message}");
+            MessageBox.Show($"é‡ç½®æ—¶å‘ç”Ÿé”™è¯¯: {ex.Message}");
         }
 
         RefreshOnlineRelatedComponents();
     }
 
-    // µã»÷ÔÚÏßÁ´½ÓÊı±êÇ©ºóÖØÖÃ¸÷ÖÖÏà¹Ø×´Ì¬
+    // ç‚¹å‡»åœ¨çº¿é“¾æ¥æ•°æ ‡ç­¾åé‡ç½®å„ç§ç›¸å…³çŠ¶æ€
     private void OnlineLinkCountLabel_Click(object sender, EventArgs e)
     {
         if (!File.Exists(LinksFilePath))
         {
-            onlineLinkstextbox.Text = "¶ÁÈ¡´íÎó£¬ÇëÖØÖÃ£¡";
+            onlineLinkstextbox.Text = "è¯»å–é”™è¯¯ï¼Œè¯·é‡ç½®ï¼";
             return;
         }
 
         RefreshOnlineRelatedComponents();
     }
 
-    // Ìæ»»Îª¹úÄÚ¾µÏñÁ´½Ó (gitmirror)
-    private void ¹úÄÚ¾µÏñÁ´½ÓToolStripMenuItem_Click(object sender, EventArgs e)
+    // æ›¿æ¢ä¸ºå›½å†…é•œåƒé“¾æ¥ (gitmirror)
+    private void å›½å†…é•œåƒé“¾æ¥ToolStripMenuItem_Click(object sender, EventArgs e)
     {
         ReplaceDomainInFile();
     }
 
-    // ½ûÓÃ/ÆôÓÃ ËùÓĞ°´Å¥ (·ÀÖ¹Îó²Ù×÷)
+    // ç¦ç”¨/å¯ç”¨ æ‰€æœ‰æŒ‰é’® (é˜²æ­¢è¯¯æ“ä½œ)
     private void DisableAllbtns()
     {
         btnConvert.Enabled = false;
